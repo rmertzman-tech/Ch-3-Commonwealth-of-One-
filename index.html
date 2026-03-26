@@ -1,1719 +1,644 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historical Futures Lab - CIB Thermodynamics Simulations</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        *:focus {
-            outline: 3px solid #2563eb;
-            outline-offset: 2px;
-        }
-        
-        @media print {
-            .no-print { display: none; }
-        }
-        
-        .sr-only {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border-width: 0;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
-        
-        .timeline-node {
-            position: relative;
-        }
-        
-        .timeline-node::before {
-            content: '';
-            position: absolute;
-            left: 20px;
-            top: 40px;
-            bottom: -20px;
-            width: 2px;
-            background: #cbd5e1;
-        }
-        
-        .timeline-node:last-child::before {
-            display: none;
-        }
-        
-        .gradient-mandela {
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-        }
-        
-        .gradient-boisjoly {
-            background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-        }
-        
-        .gradient-salk {
-            background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
-        }
-        
-        .gradient-carson {
-            background: linear-gradient(135deg, #0891b2 0%, #06b6d4 100%);
-        }
-        
-        .path-a { border-color: #ef4444; background-color: #fef2f2; }
-        .path-b { border-color: #10b981; background-color: #f0fdf4; }
-        
-        .metric-critical { color: #dc2626; }
-        .metric-warning { color: #f59e0b; }
-        .metric-good { color: #10b981; }
-        .metric-excellent { color: #059669; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Chapter 3 — The Commonwealth of One</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#0f766e;--teal-dark:#0d5e57;--teal-mid:#14b8a6;--teal-light:#ccfbf1;
+  --amber:#f59e0b;--amber-dark:#92400e;--amber-light:#fef3c7;
+  --navy:#1a2744;--ink:#1f2937;--muted:#6b7280;
+  --border:#e5e7eb;--paper:#f9fafb;--white:#ffffff;
+  --success:#16a34a;--success-light:#dcfce7;
+  --danger:#dc2626;--danger-light:#fee2e2;
+  --sky:#1e3a8a;--sky-light:#dbeafe;
+  font-size:18px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Cormorant Garamond','Georgia',serif;background:linear-gradient(135deg,#0a1628 0%,#0d1e38 50%,#0a1628 100%);min-height:100vh;color:var(--ink)}
+.app-wrap{max-width:900px;margin:0 auto;padding:1rem}
+
+/* ── HEADER ── */
+.app-header{text-align:center;padding:2rem 1rem 1.5rem;color:white}
+.app-header .ch-label{font-family:'JetBrains Mono',monospace;font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:rgba(20,184,166,.7);margin-bottom:.5rem}
+.app-header h1{font-size:2.1rem;font-weight:700;line-height:1.2;color:white;margin-bottom:.4rem}
+.app-header .subtitle{font-size:1rem;color:rgba(255,255,255,.55);font-style:italic}
+
+/* ── TABS ── */
+.tab-nav{display:flex;gap:.3rem;background:rgba(255,255,255,.06);border-radius:.75rem;padding:.35rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.tab-btn{padding:.45rem .8rem;border:none;background:transparent;color:rgba(255,255,255,.5);font-family:'Cormorant Garamond',serif;font-size:.85rem;border-radius:.45rem;cursor:pointer;transition:.2s;white-space:nowrap}
+.tab-btn:hover{color:rgba(255,255,255,.8);background:rgba(255,255,255,.08)}
+.tab-btn.active{background:var(--teal-dark);color:white;font-weight:600}
+.tab-btn.done::after{content:'✓';margin-left:.3rem;font-size:.7rem;color:var(--teal-mid)}
+
+/* ── PANE ── */
+.tab-pane{display:none;background:white;border-radius:1rem;padding:2rem;box-shadow:0 4px 24px rgba(0,0,0,.18)}
+.tab-pane.active{display:block;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── TYPOGRAPHY ── */
+h2{font-size:1.6rem;font-weight:700;color:var(--teal-dark);margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:3px solid var(--teal-mid)}
+h3{font-size:1.2rem;font-weight:700;color:var(--navy);margin:1.25rem 0 .5rem}
+h4{font-size:1rem;font-weight:700;color:var(--amber-dark);margin:.9rem 0 .35rem}
+p{line-height:1.75;margin-bottom:.9rem;font-size:.97rem;color:var(--ink)}
+strong{color:var(--navy)}
+
+/* ── CARDS ── */
+.card{border-radius:.75rem;padding:1.35rem;margin-bottom:1.1rem}
+.card-teal{background:var(--teal-light);border-left:4px solid var(--teal-mid)}
+.card-amber{background:var(--amber-light);border-left:4px solid var(--amber)}
+.card-navy{background:var(--navy);color:white;padding:1.5rem}
+.card-navy h3,.card-navy h4{color:var(--teal-mid)}
+.card-navy p{color:rgba(255,255,255,.8)}
+.card-dark{background:#0f1e35;color:white;border-radius:.75rem;padding:1.5rem;margin-bottom:1.1rem}
+.card-dark h3{color:var(--amber);font-size:1.1rem;margin-top:0}
+.card-dark p{color:rgba(255,255,255,.75)}
+.card-sky{background:var(--sky-light);border-left:4px solid var(--sky)}
+.card-success{background:var(--success-light);border-left:4px solid var(--success)}
+
+/* ── PRF TABLE ── */
+.prf-table{width:100%;border-collapse:collapse;font-size:.88rem;margin:1rem 0}
+.prf-table th{background:var(--navy);color:white;padding:.6rem .75rem;text-align:left;font-family:'JetBrains Mono',monospace;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em}
+.prf-table td{padding:.55rem .75rem;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.55}
+.prf-table tr:nth-child(odd) td{background:var(--paper)}
+.prf-table tr:hover td{background:var(--teal-light)}
+.prf-table .dim{font-weight:700;color:var(--teal-dark);width:22%;font-size:.85rem}
+
+/* ── CONTRAST TABLE ── */
+.contrast-table{width:100%;border-collapse:collapse;font-size:.85rem;margin:1rem 0}
+.contrast-table th{background:var(--navy);color:white;padding:.5rem .65rem;text-align:left;font-size:.75rem}
+.contrast-table td{padding:.5rem .65rem;border:1px solid var(--border);vertical-align:top;line-height:1.5}
+.contrast-table .row-label{font-weight:700;color:var(--navy);background:var(--paper)}
+.contrast-table .ch2-col{background:var(--sky-light)}
+.contrast-table .ch3-col{background:var(--teal-light)}
+
+/* ── ATCF SLIDERS ── */
+.atcf-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+.atcf-item{background:var(--paper);border:1px solid var(--border);border-radius:.6rem;padding:1rem}
+.atcf-item h4{margin:0 0 .4rem;font-size:.9rem}
+.atcf-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:.3rem}
+.atcf-val{font-size:1.1rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--teal-dark)}
+input[type=range].atcf-sl{width:100%;height:6px;border-radius:3px;-webkit-appearance:none;cursor:pointer;outline:none;margin:.3rem 0}
+input[type=range].atcf-sl::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--teal-dark);cursor:pointer;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.atcf-total{background:var(--navy);color:white;border-radius:.5rem;padding:.75rem 1rem;margin-top:.75rem;text-align:center}
+.atcf-total .val{font-size:1.6rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--teal-mid)}
+
+/* ── STRUCTURAL DIAGNOSTIC ── */
+.diag-row{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;padding:.75rem;background:var(--paper);border-radius:.5rem;border:1px solid var(--border)}
+.diag-label{font-size:.88rem;font-weight:600;color:var(--navy);min-width:160px}
+input[type=range].diag-sl{flex:1;height:6px;border-radius:3px;-webkit-appearance:none;cursor:pointer;outline:none}
+input[type=range].diag-sl::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;cursor:pointer;border:2px solid white}
+.diag-val{font-family:'JetBrains Mono',monospace;font-size:.88rem;font-weight:600;min-width:2.5rem;text-align:right}
+.diag-anchor{font-size:.7rem;color:var(--muted);display:flex;justify-content:space-between}
+
+/* ── JOURNAL ── */
+.journal-q{background:var(--paper);border:1px solid var(--border);border-radius:.6rem;padding:1rem;margin-bottom:1rem}
+.journal-q .q-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--teal-dark);margin-bottom:.4rem}
+.journal-q p{font-size:.88rem;margin-bottom:.5rem}
+textarea.jta{width:100%;min-height:100px;border:1px solid var(--border);border-radius:.4rem;padding:.65rem;font-family:'Cormorant Garamond',serif;font-size:.92rem;line-height:1.6;resize:vertical;color:var(--ink)}
+textarea.jta:focus{outline:none;border-color:var(--teal-mid)}
+textarea.jta.q5{min-height:150px;border-color:var(--amber);border-width:2px}
+.save-note{font-size:.72rem;color:var(--success);font-family:'JetBrains Mono',monospace;height:1.2rem;opacity:0;transition:.3s}
+.save-note.show{opacity:1}
+
+/* ── PREDICTION RETRIEVAL ── */
+.pred-retrieve{background:rgba(15,118,110,.08);border:1px solid rgba(15,118,110,.25);border-radius:.6rem;padding:1rem;margin-bottom:1rem}
+.pred-retrieve .pr-label{font-family:'JetBrains Mono',monospace;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;color:var(--teal-dark);margin-bottom:.3rem}
+.pred-retrieve .pr-text{font-size:.88rem;color:var(--ink);font-style:italic;line-height:1.6;border-left:3px solid var(--amber);padding-left:.6rem}
+
+/* ── PROGRESS ── */
+.progress-bar{height:5px;background:var(--border);border-radius:3px;margin-bottom:1.5rem;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--teal-mid),var(--amber));transition:.4s}
+
+/* ── QUOTE ── */
+blockquote{background:var(--amber-light);border-left:4px solid var(--amber);border-radius:0 .5rem .5rem 0;padding:1rem 1.25rem;margin:1rem 0;font-style:italic;color:var(--amber-dark);font-size:.95rem}
+blockquote cite{display:block;margin-top:.4rem;font-style:normal;font-size:.8rem;font-weight:600;color:var(--muted)}
+
+/* ── NAV BUTTONS ── */
+.nav-row{display:flex;justify-content:space-between;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)}
+.nav-btn{padding:.5rem 1.1rem;border-radius:.45rem;border:1px solid var(--border);background:white;color:var(--navy);font-family:'Cormorant Garamond',serif;font-size:.9rem;cursor:pointer;transition:.15s}
+.nav-btn:hover{background:var(--teal-light);border-color:var(--teal-mid)}
+.nav-btn.primary{background:var(--teal-dark);color:white;border-color:var(--teal-dark)}
+.nav-btn.primary:hover{background:var(--teal)}
+</style>
 </head>
-<body class="bg-gray-50">
+<body>
+<div class="app-wrap">
 
-<!-- Header -->
-<header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-6 shadow-xl">
-    <div class="max-w-7xl mx-auto px-4">
-        <h1 class="text-4xl font-bold mb-2">The Historical Futures Lab</h1>
-        <p class="text-xl opacity-90">Interactive CIB Thermodynamics Simulations</p>
-        <p class="text-sm mt-2 opacity-75">Ethics Beyond Boundaries - Saint Petersburg College</p>
-    </div>
-</header>
-
-<div id="app" class="max-w-7xl mx-auto px-4 py-8">
-    
-    <!-- Introduction -->
-    <section id="intro" class="bg-white rounded-2xl shadow-xl p-8 mb-8">
-        <h2 class="text-3xl font-bold text-gray-900 mb-4">How This Works</h2>
-        <div class="prose prose-lg max-w-none">
-            <p class="text-gray-700 mb-4">
-                This lab uses real historical figures at critical decision points in their lives. 
-                For each case, you'll:
-            </p>
-            <ol class="list-decimal list-inside space-y-2 text-gray-700 mb-6">
-                <li>See their <strong>actual assessment scores</strong> (reconstructed from historical evidence)</li>
-                <li>Understand the <strong>critical decision</strong> they faced</li>
-                <li>Run <strong>simulations</strong> of different choices using UCP 2v + CIB Thermodynamics</li>
-                <li>Compare <strong>predicted trajectories</strong> to what actually happened</li>
-                <li>Validate whether our models <strong>match reality</strong></li>
-            </ol>
-            
-            <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
-                <h3 class="font-bold text-blue-900 mb-2">Why Historical Cases?</h3>
-                <p class="text-blue-900 text-sm">
-                    These aren't hypotheticals. These people made real choices with measurable consequences. 
-                    If our thermodynamic models can predict what actually happened, they're not just theory—
-                    they're describing fundamental laws of human flourishing.
-                </p>
-            </div>
-            
-            <button onclick="showCaseSelection()" class="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg">
-                Begin Historical Simulations
-            </button>
-        </div>
-    </section>
-    
-    <!-- Case Selection -->
-    <section id="case-selection" class="hidden">
-        <h2 class="text-3xl font-bold text-gray-900 mb-6">Select a Historical Case</h2>
-        
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            <!-- Mandela Card -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow cursor-pointer" onclick="loadCase('mandela')">
-                <div class="gradient-mandela p-6 text-white">
-                    <h3 class="text-2xl font-bold mb-2">Nelson Mandela</h3>
-                    <p class="text-sm opacity-90">Robben Island, 1964</p>
-                </div>
-                <div class="p-6">
-                    <h4 class="font-bold text-gray-900 mb-2">The BioBond Decision</h4>
-                    <p class="text-sm text-gray-700 mb-4">
-                        Should he exercise daily in his 7×7 cell despite exhaustion, mockery, and no apparent benefit?
-                    </p>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">Duration: 27 years</span>
-                        <span class="font-semibold text-green-600">Self-Care as Resistance</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Boisjoly Card -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow cursor-pointer" onclick="loadCase('boisjoly')">
-                <div class="gradient-boisjoly p-6 text-white">
-                    <h3 class="text-2xl font-bold mb-2">Roger Boisjoly</h3>
-                    <p class="text-sm opacity-90">Post-Challenger, 1986</p>
-                </div>
-                <div class="p-6">
-                    <h4 class="font-bold text-gray-900 mb-2">The Testimony Decision</h4>
-                    <p class="text-sm text-gray-700 mb-4">
-                        Should he tell the full truth to the Rogers Commission about management pressure?
-                    </p>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">Duration: 5 years critical</span>
-                        <span class="font-semibold text-red-600">Truth vs. Career</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Salk Card -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow cursor-pointer" onclick="loadCase('salk')">
-                <div class="gradient-salk p-6 text-white">
-                    <h3 class="text-2xl font-bold mb-2">Jonas Salk</h3>
-                    <p class="text-sm opacity-90">Vaccine Success, 1955</p>
-                </div>
-                <div class="p-6">
-                    <h4 class="font-bold text-gray-900 mb-2">The Patent Decision</h4>
-                    <p class="text-sm text-gray-700 mb-4">
-                        Patent the vaccine and become wealthy, or give it to humanity?
-                    </p>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">Cost: $7 billion</span>
-                        <span class="font-semibold text-purple-600">Generativity vs. Wealth</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Carson Card -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow cursor-pointer" onclick="loadCase('carson')">
-                <div class="gradient-carson p-6 text-white">
-                    <h3 class="text-2xl font-bold mb-2">Rachel Carson</h3>
-                    <p class="text-sm opacity-90">Terminal Illness, 1962</p>
-                </div>
-                <div class="p-6">
-                    <h4 class="font-bold text-gray-900 mb-2">The Silent Spring Decision</h4>
-                    <p class="text-sm text-gray-700 mb-4">
-                        Fight chemical industry while dying of cancer, or rest peacefully?
-                    </p>
-                    <div class="flex items-center justify-between text-sm">
-                        <span class="text-gray-600">Life expectancy: 2 years</span>
-                        <span class="font-semibold text-cyan-600">Legacy Over Rest</span>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Comparative Analysis Card -->
-            <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow cursor-pointer border-2 border-indigo-300" onclick="loadCase('comparative')">
-                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 p-6 text-white">
-                    <h3 class="text-2xl font-bold mb-2">Comparative Analysis</h3>
-                    <p class="text-sm opacity-90">All Cases</p>
-                </div>
-                <div class="p-6">
-                    <h4 class="font-bold text-gray-900 mb-2">Pattern Recognition</h4>
-                    <p class="text-sm text-gray-700 mb-4">
-                        Compare all cases side-by-side to identify universal thermodynamic patterns.
-                    </p>
-                    <div class="text-sm font-semibold text-indigo-600">
-                        Meta-Analysis
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-    
-    <!-- Case Display Container -->
-    <div id="case-display" class="hidden"></div>
-    
+<div class="app-header">
+  <div class="ch-label">Ethics Beyond Boundaries · Chapter 3</div>
+  <h1>The Commonwealth of One</h1>
+  <div class="subtitle">Identity Under Maximum Suppression · Case Study: Bishop Saad Sirop Hanna</div>
 </div>
 
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:14%"></div></div>
+
+<div class="tab-nav" role="tablist">
+  <button class="tab-btn active" id="tb-outside" onclick="showTab('outside',this)" role="tab" aria-selected="true">§1 Outside → Inside</button>
+  <button class="tab-btn" id="tb-prf" onclick="showTab('prf',this)" role="tab">§2 Hanna's PRF</button>
+  <button class="tab-btn" id="tb-thermo" onclick="showTab('thermo',this)" role="tab">§3 The Thermodynamic Universe</button>
+  <button class="tab-btn" id="tb-atcf" onclick="showTab('atcf',this)" role="tab">§4 Commonwealth of One</button>
+  <button class="tab-btn" id="tb-biobond" onclick="showTab('biobond',this)" role="tab">§5 BioBond</button>
+  <button class="tab-btn" id="tb-diag" onclick="showTab('diag',this)" role="tab">§6 Your Diagnostic</button>
+  <button class="tab-btn" id="tb-journal" onclick="showTab('journal',this)" role="tab">§7 Journal</button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §1 FROM THE OUTSIDE TO THE INSIDE
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane active" id="pane-outside" role="tabpanel">
+  <h2>§1 — From the Outside to the Inside</h2>
+
+  <p><strong>Chapter 2 showed you the suppression gap from the outside.</strong> You were the analyst. The telescope was pointed at an institution — NASA's launch decision architecture in January 1986. What you measured was structural: the distance between what Roger Boisjoly knew and what reached the launch decision.</p>
+
+  <p><strong>Chapter 3 points the same telescope at an individual from the inside.</strong> Bishop Saad Sirop Hanna, imprisoned in Baghdad in 2006, faced a suppression architecture designed not to filter his knowledge, but to destroy the Identity Kernel that generated his knowledge in the first place.</p>
+
+  <div class="card card-teal">
+    <h4>The Precise Structural Difference</h4>
+    <p>Chapter 2's suppression gap is an institutional measure — the distance between what exists in a system and what reaches its decisions. Chapter 3's morphic fidelity is an identity measure — the ratio of what remains coherent to what has been eroded under suppression. Both are structural. Neither is about individual virtue.</p>
+  </div>
+
+  <h3>The Three-Chapter Contrast</h3>
+  <p>Read this table to locate Chapter 3 precisely in the course's architecture before entering the case.</p>
+
+  <table class="contrast-table">
+    <thead>
+      <tr><th>Dimension</th><th class="ch2-col">Chapter 2 — Challenger</th><th class="ch3-col">Chapter 3 — Hanna</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="row-label">What it models</td><td class="ch2-col">Institutional architecture of a launch decision — 16 agents, authority-weighted evidence, schedule pressure</td><td class="ch3-col">Captivity environment of one person under maximum suppression — 14 agents, community severed, boundary strongly activated</td></tr>
+      <tr><td class="row-label">Primary metric</td><td class="ch2-col">Suppression gap (λ Raw − λ Perceived): how much knowledge failed to reach the decision</td><td class="ch3-col">Morphic fidelity (λ Raw ÷ (λ Raw + morphic suppression)): how much identity signal survived the conditions designed to destroy it</td></tr>
+      <tr><td class="row-label">The ethical claim</td><td class="ch2-col">The disaster was structurally produced by an architecture that filtered empirical input before it reached decision authority</td><td class="ch3-col">Hanna's resilience was structurally enabled by his Identity Kernel depth and external cognitive scaffolding — not individual virtue alone</td></tr>
+      <tr><td class="row-label">What cannot be shown</td><td class="ch2-col">What Boisjoly experienced from the inside</td><td class="ch3-col">Whether Hanna would have broken without institutional support — only structural probabilities</td></tr>
+    </tbody>
+  </table>
+
+  <div class="card card-amber">
+    <h4>Your Chapter 2 Prediction</h4>
+    <p>In Chapter 2's journal Q5, you predicted what happens to λ Raw and morphic fidelity when every BioBond is systematically severed under maximum entropy conditions. The Hanna simulation will test that prediction. Find it before running the simulation.</p>
+    <div class="pred-retrieve">
+      <div class="pr-label">Your Chapter 2 Q5 Prediction (retrieved)</div>
+      <div class="pr-text" id="ch2PredDisplay">Loading…</div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <span></span>
+    <button class="nav-btn primary" onclick="showTab('prf',document.getElementById('tb-prf'))">Next: Hanna's PRF →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §2 HANNA'S PRF
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="pane-prf" role="tabpanel">
+  <h2>§2 — Bishop Hanna's PRF</h2>
+
+  <p>Chapter 2 developed Boisjoly's PRF to explain why his configuration made him structurally positioned to see what the NASA architecture suppressed. Hanna's PRF serves a different structural purpose: it explains why his configuration made his identity structurally <strong>resistant</strong> to the suppression architecture his captors designed.</p>
+
+  <p><strong>The key structural insight:</strong> his captors needed to accomplish one thing — get Hanna to say the words of conversion. The obstacle was not physical. The obstacle was his generative model. His beliefs, rules, and ontology together constituted a predictive architecture that processed the death threat in a way that made compliance more catastrophically dissonant than death.</p>
+
+  <table class="prf-table">
+    <thead><tr><th>PRF Dimension</th><th>Hanna's Configuration</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="dim">Beliefs</td>
+        <td>God is present in suffering. All human beings — including captors — possess inherent dignity that cannot be forfeited by their actions. Reality includes dimensions that physical threat cannot reach. These were not loosely held propositions. They were the precision-weighted priors from which every experience was processed.</td>
+      </tr>
+      <tr>
+        <td class="dim">Rules</td>
+        <td>Faith cannot be renounced to preserve biological life. Protect the vulnerable even at personal cost. Forgiveness is constitutive of who he is — not a response he chooses. These rules had been practiced for decades until they became the automatic output of his generative model.</td>
+      </tr>
+      <tr>
+        <td class="dim">Ontology</td>
+        <td>Death is not the worst outcome. Betrayal of one's deepest commitments is worse than death. The spiritual dimension of reality is as real as the physical dimension — more permanent, in fact. This ontology meant the captors' primary weapon — the credible threat of death — was structurally less powerful than they intended.</td>
+      </tr>
+      <tr>
+        <td class="dim">Authenticity</td>
+        <td>No gap between internal state and external expression throughout the captivity. He told his captors directly: 'I will not become a Muslim, and I fully know that you are going to kill me for it.' The absence of a gap between knowing and expressing — under conditions specifically designed to create that gap — is what the simulation's low morphic suppression in Run 2 measures.</td>
+      </tr>
+      <tr>
+        <td class="dim">Assembly History</td>
+        <td>Engineering degree → Philosophy doctorate → Seminary formation → Pastoral ministry — 34 years deep. Each layer built the Identity Kernel deeper. By 2006, the formation was so deep that the structural conditions designed to collapse it could not reach its foundation.</td>
+      </tr>
+      <tr>
+        <td class="dim">Forward Pull</td>
+        <td>If survival: renewed service. If death: martyrdom, which his PRF experiences not as the worst outcome but as the highest honor available to a priest. Either branch was authentic and available. This is why the death threat could not destroy Prospective Coherence: it could not eliminate the thing PC was oriented toward.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="card card-teal">
+    <h4>The Assembly History Dimension is the Structural Key</h4>
+    <p>His captors were not testing a set of beliefs he had recently adopted. They were testing a structure that had been reinforced thousands of times across three decades. The depth of the formation was the structural variable that determined the depth of the resistance. The simulation cannot model this depth directly — but the boundary block field (+0.9) and sacred_boundary worldview distribution (0.68) approximate what 34 years of Identity Kernel building produces.</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="showTab('outside',document.getElementById('tb-outside'))">← Back</button>
+    <button class="nav-btn primary" onclick="showTab('thermo',document.getElementById('tb-thermo'))">Next: The Thermodynamic Universe →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §3 THE THERMODYNAMIC UNIVERSE
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="pane-thermo" role="tabpanel">
+  <h2>§3 — The Thermodynamic Universe</h2>
+
+  <p>Before we can read what the simulation measures, we need to understand the universe it is modelling — specifically what it means to be a living, thinking, choosing being inside a cosmos that trends naturally toward disorder.</p>
+
+  <h3>The Second Law and Identity</h3>
+  <p>The Second Law of Thermodynamics states that in any closed system, entropy — disorder, randomness, the degradation of organized structure — tends to increase over time. Ice melts. Buildings crumble. Complex organizations dissolve.</p>
+
+  <p><strong>A living human being is a local, temporary, energy-expensive exception to this trend.</strong> You are a low-entropy structure in a high-entropy universe. Every moment you are alive, your body is consuming energy to maintain the organized complexity that makes you you. Identity coherence is not a fixed possession — it is an ongoing thermodynamic project requiring continuous energy expenditure.</p>
+
+  <blockquote>
+    "You have approximately 37 trillion cells, each consuming energy every second to maintain its organized state. Your brain alone uses about 20% of your body's energy budget — roughly 12 watts, continuously — to maintain the electrochemical patterns that constitute your thoughts, memories, and sense of self. The idea that 'just existing' is effortless is a biological illusion. Existence is expensive. Identity is even more expensive."
+    <cite>— Chapter 3, Ethics Beyond Boundaries</cite>
+  </blockquote>
+
+  <h3>The Sapolsky Gate — Bottom-Up Causality</h3>
+  <p>Robert Sapolsky's research establishes that chronic stress measurably degrades the prefrontal cortex — the brain region responsible for deliberate reasoning. The simulation models this through the <strong>Sapolsky gate</strong>: as stress rises past approximately 0.65, C_PFC collapses and the agent is pushed from MANUAL mode (deliberate reasoning) into AUTOMATIC mode (reactive, survival responses). Compliance — conversion — was what Hanna's captors were designing for.</p>
+
+  <div class="card card-amber">
+    <h4>The Sapolsky Gate — What It Means for Ethics</h4>
+    <p>If chronic stress degrades the capacity for deliberate moral reasoning, then the conditions under which people make ethical decisions matter — not just morally, but biologically. A person carrying accumulated trauma has a literally different capacity for ethical deliberation than a person with adequate rest and safety. This is not an excuse for harmful choices. It is a structural fact about what ethics costs.</p>
+  </div>
+
+  <h3>Top-Down Causality — The Identity Kernel as Constraint</h3>
+  <p>But Sapolsky does not tell the whole story. What we call 'identity' is neurologically a set of high-precision priors: predictions about 'who I am' that are so confident, so deeply established, that they literally suppress alternative neural pathways through inhibitory synaptic connections.</p>
+
+  <p><strong>This is top-down causality:</strong> the Identity Kernel generates predictions so confident that they constrain which biological pathways activate. The psychology is implemented by the biology at a different organizational level, and it operates causally downward onto the biology beneath it.</p>
+
+  <p>Hanna's 34-year-deep formation generated predictions of extraordinary precision — "I am a priest," "my faith is non-negotiable," "death is less catastrophic than betrayal" — that were physically suppressing the alternative biological pathways even under maximum biological pressure. The result that should be impossible according to a purely bottom-up account: his deliberate reasoning capacity held.</p>
+
+  <div class="card card-sky">
+    <h4>Simulation Parameter: base_entropy 0.88</h4>
+    <p>In Hanna's simulation, base_entropy is set to 0.88 — near-maximum in the engine's scale. This models the near-maximum cognitive and relational disorder of the captivity environment: pain, isolation, uncertainty, the constant threat of death. The community block field is −0.9 — every relational cognitive scaffold has been systematically severed. These are the conditions under which his Identity Kernel had to maintain coherence.</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="showTab('prf',document.getElementById('tb-prf'))">← Back</button>
+    <button class="nav-btn primary" onclick="showTab('atcf',document.getElementById('tb-atcf'))">Next: Commonwealth of One →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §4 THE COMMONWEALTH OF ONE — ATCF
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="pane-atcf" role="tabpanel">
+  <h2>§4 — The Commonwealth of One</h2>
+
+  <p>The <strong>Commonwealth of One</strong> is the internal infrastructure of individual identity coherence — four structural capacities that together constitute the self's ability to maintain coherent agency under pressure. The simulation measures it indirectly through λ Raw, morphic suppression, and morphic fidelity.</p>
+
+  <p>Use the sliders below to assess how each ATCF component operated in Hanna's captivity — then read the structural explanation beneath each one.</p>
+
+  <div class="atcf-grid">
+    <div class="atcf-item">
+      <h4>Historical Continuity (HC)</h4>
+      <div class="atcf-label"><span>Severed</span><span class="atcf-val" id="hc-val">8</span><span>Intact</span></div>
+      <input type="range" class="atcf-sl" id="hc-sl" min="0" max="10" value="8" step="1"
+        style="background:linear-gradient(90deg,var(--teal-dark) 80%,var(--border) 80%)"
+        oninput="updateATCF('hc',this.value)">
+      <p style="font-size:.8rem;margin:.5rem 0 0;color:var(--muted)">When captors demanded he renounce his priesthood, he chose death over historical rupture. HC held at near-maximum: his past was continuous with his present despite 28 days of pressure designed to sever that thread.</p>
+    </div>
+    <div class="atcf-item">
+      <h4>Present Integration (PI)</h4>
+      <div class="atcf-label"><span>Fragmented</span><span class="atcf-val" id="pi-val">9</span><span>Aligned</span></div>
+      <input type="range" class="atcf-sl" id="pi-sl" min="0" max="10" value="9" step="1"
+        style="background:linear-gradient(90deg,var(--teal-dark) 90%,var(--border) 90%)"
+        oninput="updateATCF('pi',this.value)">
+      <p style="font-size:.8rem;margin:.5rem 0 0;color:var(--muted)">No gap between values and choices throughout the captivity. He extended compassion to his captors, protected the guard who helped him. PI at maximum: values and behavior were aligned under maximum pressure to produce that gap.</p>
+    </div>
+    <div class="atcf-item">
+      <h4>Prospective Coherence (PC)</h4>
+      <div class="atcf-label"><span>Eliminated</span><span class="atcf-val" id="pc-val">9</span><span>Clear</span></div>
+      <input type="range" class="atcf-sl" id="pc-sl" min="0" max="10" value="9" step="1"
+        style="background:linear-gradient(90deg,var(--teal-dark) 90%,var(--border) 90%)"
+        oninput="updateATCF('pc',this.value)">
+      <p style="font-size:.8rem;margin:.5rem 0 0;color:var(--muted)">His forward pull was transcendent — oriented toward something death could not eliminate. If survival: renewed service. If death: martyrdom. Either branch was authentic. The death threat could not destroy PC because it could not eliminate what PC was oriented toward.</p>
+    </div>
+    <div class="atcf-item">
+      <h4>Meta-Constructor Capacity (MCC)</h4>
+      <div class="atcf-label"><span>Collapsed</span><span class="atcf-val" id="mcc-val">8</span><span>Active</span></div>
+      <input type="range" class="atcf-sl" id="mcc-sl" min="0" max="10" value="8" step="1"
+        style="background:linear-gradient(90deg,var(--teal-dark) 80%,var(--border) 80%)"
+        oninput="updateATCF('mcc',this.value)">
+      <p style="font-size:.8rem;margin:.5rem 0 0;color:var(--muted)">Under torture, he pondered love's meaning, God's presence, goodness itself. He was examining his own PRF while it was under maximum attack. His philosophy doctoral training made this possible: not detachment from experience, but processing experience at multiple levels simultaneously.</p>
+    </div>
+  </div>
+
+  <div class="atcf-total">
+    <div style="font-size:.75rem;font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.5);margin-bottom:.2rem">ATCF Score (your assessment)</div>
+    <div class="val" id="atcf-total">34</div>
+    <div style="font-size:.8rem;color:rgba(255,255,255,.55);margin-top:.2rem">out of 40</div>
+  </div>
+
+  <div class="card card-teal" style="margin-top:1rem">
+    <h4>Why the ATCF Score Matters Structurally</h4>
+    <p>The four ATCF components are not virtues to be admired — they are structural capacities that determine whether an agent can maintain coherent ethical action under conditions designed to produce incoherence. The simulation's morphic fidelity metric measures the structural output of all four operating simultaneously. Hanna's ATCF was near 9.75/10 — not a gift but the consequence of 34 years of building something specific.</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="showTab('thermo',document.getElementById('tb-thermo'))">← Back</button>
+    <button class="nav-btn primary" onclick="showTab('biobond',document.getElementById('tb-biobond'))">Next: BioBond →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §5 BIOBOND AND THE EXTENDED MIND
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="pane-biobond" role="tabpanel">
+  <h2>§5 — BioBond and the Extended Mind</h2>
+
+  <p>Chapter 1 established Andy Clark's extended mind thesis: the cognitive boundary is not at the skull. Your PRF is scaffolded by the community structures, institutional environments, and relationships you inhabit. When Hanna's captors severed his connection to his Church community, his family, and his congregation, they were not merely isolating him emotionally. <strong>They were dismantling part of his cognitive system.</strong></p>
+
+  <h3>What BioBond Actually Provides</h3>
+  <p>In the simulation, BioBond models the restoration of one component of that distributed cognitive system. The Church's international network did not reduce the entropy of the captivity environment — it did not change the block fields. What it maintained was the <strong>external cognitive scaffolding</strong> that kept Hanna's generative model stable under conditions designed to destabilize it.</p>
+
+  <div class="card card-navy">
+    <h4>Run 1 vs Run 2 — The Structural Claim</h4>
+    <p>Both simulation runs have identical suppression conditions — same entropy (0.88), same stress (0.76), same block fields. The only structural difference: BioBond activates at step 4 in Run 2, representing the moment the Church network mobilized (Pope Benedict XVI praying publicly, Church leaders across multiple countries organizing the ransom).</p>
+    <p style="margin-top:.5rem">The fidelity improvement between Run 1 and Run 2 is the numerical measure of what Clark's extended mind thesis predicts: severing the external component of a distributed cognitive system degrades the coherence of the whole; restoring it partially restores that coherence.</p>
+  </div>
+
+  <h3>Not Emotional Support — Structural Scaffolding</h3>
+  <p>"Emotional comfort" is the folk-psychology description of what BioBond provides structurally. The simulation models the structural effect: the external network maintains the precision weighting on the agent's identity priors, which keeps the generative model stable and prevents the morphic suppression accumulation that would occur without it.</p>
+
+  <div class="card card-amber">
+    <h4>The Privilege Dimension</h4>
+    <p>Bishop Saad's Church mobilized on his behalf: a global organization with centuries of infrastructure directed at maintaining one person's capacity to survive. Most people facing institutional suppression have far less robust BioBond structures. The simulation predicts that without institutional support, λ Raw drops and morphic suppression rises. The implication is structural, not moral: people with less BioBond are operating under higher effective entropy, in conditions more likely to produce the kind of graduated learned self-censorship that morphic suppression measures.</p>
+    <p style="margin-top:.5rem">His resilience was individual virtue and structural enablement simultaneously. The unequal distribution of BioBond structures is itself an ethical question.</p>
+  </div>
+
+  <blockquote>
+    "That experience gave me something very valuable; I learned to respect life and to look for the good in other people and try to build on it in your relationship with them. I always will be grateful to God to give me the second chance to be His voice in this world."
+    <cite>— Bishop Saad Sirop Hanna</cite>
+  </blockquote>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="showTab('atcf',document.getElementById('tb-atcf'))">← Back</button>
+    <button class="nav-btn primary" onclick="showTab('diag',document.getElementById('tb-diag'))">Next: Your Diagnostic →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §6 YOUR STRUCTURAL DIAGNOSTIC
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="pane-diag" role="tabpanel">
+  <h2>§6 — Your Structural Diagnostic</h2>
+
+  <p>The simulation parameters map directly onto your actual life. This section asks you to estimate your own structural conditions — not to compare yourself to Hanna, but to understand what the simulation is measuring when it models your ethical situation.</p>
+
+  <p>Use the sliders to estimate your current levels. This is not a test. It is a structural diagnostic that makes the concepts personally meaningful.</p>
+
+  <h3>Your Simulation Parameters</h3>
+
+  <div class="diag-row">
+    <div class="diag-label">Base Entropy</div>
+    <input type="range" class="diag-sl" id="d-entropy" min="0" max="100" value="35" step="1"
+      style="background:linear-gradient(90deg,#dc2626 35%,var(--border) 35%)"
+      oninput="updateDiag('entropy',this.value,true)">
+    <div class="diag-val" id="dv-entropy" style="color:var(--danger)">0.35</div>
+  </div>
+  <div class="diag-anchor"><span>0 — Complete order</span><span>1 — Maximum chaos</span></div>
+  <p style="font-size:.78rem;color:var(--muted);margin:.2rem 0 .75rem">Background cognitive load: financial stress, relationship conflict, unresolved obligations, information overload. A student working 40+ hours a week while attending school has higher effective base_entropy than one who studies full-time.</p>
+
+  <div class="diag-row">
+    <div class="diag-label">Base Stress (L_GC)</div>
+    <input type="range" class="diag-sl" id="d-stress" min="0" max="100" value="30" step="1"
+      style="background:linear-gradient(90deg,#dc2626 30%,var(--border) 30%)"
+      oninput="updateDiag('stress',this.value,true)">
+    <div class="diag-val" id="dv-stress" style="color:var(--danger)">0.30</div>
+  </div>
+  <div class="diag-anchor"><span>0 — Fully recovered</span><span>1 — Chronic depletion</span></div>
+  <p style="font-size:.78rem;color:var(--muted);margin:.2rem 0 .75rem">Pre-existing depletion: accumulated sleep debt, chronic health problems, unprocessed grief, long-term exposure to hostile institutions. This is your glucocorticoid load — it determines whether you start each ethical situation above or below the Sapolsky threshold.</p>
+
+  <div class="diag-row">
+    <div class="diag-label">BioBond Strength</div>
+    <input type="range" class="diag-sl" id="d-biobond" min="0" max="100" value="55" step="1"
+      style="background:linear-gradient(90deg,var(--teal-dark) 55%,var(--border) 55%)"
+      oninput="updateDiag('biobond',this.value,false)">
+    <div class="diag-val" id="dv-biobond" style="color:var(--teal-dark)">0.55</div>
+  </div>
+  <div class="diag-anchor"><span>0 — Isolated</span><span>1 — Robust external scaffolding</span></div>
+  <p style="font-size:.78rem;color:var(--muted);margin:.2rem 0 .75rem">Your structural stress-buffers: the people and institutions that actively maintain your capacity when external conditions are trying to collapse it. Your family, community, health insurance, professional network, savings. These are not luxuries — they are structural preconditions for sustained ethical agency.</p>
+
+  <div id="diag-reading" class="card card-teal" style="margin-top:.75rem">
+    <h4>Structural Reading</h4>
+    <p id="diag-text">Adjust the sliders to generate your structural reading.</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="showTab('biobond',document.getElementById('tb-biobond'))">← Back</button>
+    <button class="nav-btn primary" onclick="showTab('journal',document.getElementById('tb-journal'))">Next: Journal →</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     §7 JOURNAL
+══════════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="pane-journal" role="tabpanel">
+  <h2>§7 — Chapter Reflection Questions</h2>
+  <p>Complete these five questions before beginning the Hanna Case Explorer simulation. Your responses are saved automatically and can be exported from the case explorer app.</p>
+
+  <div class="journal-q">
+    <div class="q-label">Q1 — The PRF as Structural Resistance</div>
+    <p>Which of the six PRF dimensions in Hanna's configuration do you think contributed most to his structural resistance — and why structurally, not morally? Name the specific mechanism: how does that dimension prevent the suppression architecture from reaching the Identity Kernel?</p>
+    <textarea class="jta" id="jt-q1" placeholder="The dimension that contributed most structurally was… because mechanically it prevented…" oninput="jSave('q1',this.value)"></textarea>
+    <div class="save-note" id="sn-q1">✓ Saved</div>
+  </div>
+
+  <div class="journal-q">
+    <div class="q-label">Q2 — Your ATCF Assessment</div>
+    <p>Looking at the ATCF slider values you set in §4: which of the four components — HC, PI, PC, or MCC — would be hardest for you to maintain under conditions designed to destroy it? What structural feature of your own situation makes that component most vulnerable?</p>
+    <textarea class="jta" id="jt-q2" placeholder="The ATCF component most vulnerable in my situation is… because structurally…" oninput="jSave('q2',this.value)"></textarea>
+    <div class="save-note" id="sn-q2">✓ Saved</div>
+  </div>
+
+  <div class="journal-q">
+    <div class="q-label">Q3 — Your Structural Diagnostic</div>
+    <p>Based on §6: estimate your current base_entropy, base_stress, and BioBond strength as numbers (0–1). What institutional and relational conditions are most responsible for each? What would need to change structurally — not just personally — to improve them?</p>
+    <textarea class="jta" id="jt-q3" placeholder="My base_entropy: ___ because…&#10;My base_stress: ___ because…&#10;My BioBond: ___ because…&#10;What would need to change structurally:…" oninput="jSave('q3',this.value)"></textarea>
+    <div class="save-note" id="sn-q3">✓ Saved</div>
+  </div>
+
+  <div class="journal-q">
+    <div class="q-label">Q4 — BioBond and Structural Privilege</div>
+    <p>The chapter argues that Hanna's resilience was individual virtue and structural enablement simultaneously — and that BioBond is not equally available. Identify who in your institution or community is operating with high base_entropy and low BioBond. What does the simulation predict about the sustainability of their ethical agency under those conditions?</p>
+    <textarea class="jta" id="jt-q4" placeholder="In my institution/community, those with high entropy and low BioBond are… The simulation predicts…" oninput="jSave('q4',this.value)"></textarea>
+    <div class="save-note" id="sn-q4">✓ Saved</div>
+  </div>
+
+  <div class="journal-q" style="border:2px solid var(--amber);background:rgba(245,158,11,.05)">
+    <div class="q-label" style="color:var(--amber-dark)">Q5 — Prediction for Chapter 4 (Maathai)</div>
+    <p>Chapter 4 will ask: how do five groups with genuinely incompatible values coordinate toward a shared goal? The simulation will model two phases — Phase 1 (value-agreement attempt) and Phase 2 (concrete shared task). Before reading Chapter 4, predict:</p>
+    <ul style="font-size:.88rem;margin:.4rem 0 .6rem 1.2rem;line-height:1.7;color:var(--ink)">
+      <li><strong>Phase 1 (value-agreement):</strong> what do you predict for OS2 Bridge when diverse frameworks must agree on values before acting?</li>
+      <li><strong>Phase 2 (shared task):</strong> what changes when the same groups have a concrete shared task instead?</li>
+      <li><strong>Friction:</strong> will friction be higher or lower in Phase 2 compared to Phase 1? Why?</li>
+      <li><strong>Through your PRF:</strong> which of the five worldview frameworks (role_order, sacred_boundary, liberal_individualist, ubuntu_relational, indigenous_custodial) most resembles your dominant PRF orientation?</li>
+    </ul>
+    <textarea class="jta q5" id="jt-q5" placeholder="Phase 1 OS2 Bridge prediction: I predict ___ because…&#10;Phase 2 OS2 Bridge prediction: I predict ___ because…&#10;Friction: I predict Phase 2 friction will be ___ than Phase 1 because…&#10;My PRF is most like ___ because…" oninput="jSave('cq5',this.value)"></textarea>
+    <div class="save-note" id="sn-q5">✓ Saved for Chapter 4</div>
+  </div>
+
+  <div class="card card-dark" style="margin-top:1.5rem">
+    <h3>Looking Ahead: Chapter 4 — From Seven Trees to Fifty-One Million</h3>
+    <p>Chapter 3 asked: how does one person hold together under maximum entropy? The answer involved the depth of the Identity Kernel, the structural scaffolding that maintained it, and the thermodynamic cost of identity coherence when the environment is designed to produce disintegration.</p>
+    <p style="margin-top:.6rem">Chapter 4 asks the opposite question at a larger scale: how do people who disagree about everything coordinate toward a shared goal? Wangari Maathai's Green Belt Movement organized Kenyan women across radical value difference — different ethnic groups, different religious traditions, different political orientations — to plant 51 million trees over three decades. No value agreement was required. Functional equivalence was enough.</p>
+    <p style="margin-top:.6rem">The same simulation engine. A different — and equally necessary — question.</p>
+  </div>
+
+  <div class="nav-row">
+    <button class="nav-btn" onclick="showTab('diag',document.getElementById('tb-diag'))">← Back</button>
+    <a href="https://rmertzman-tech.github.io/Three-Scenario-Sims/hanna-case-explorer.html"
+       target="_blank" style="text-decoration:none">
+      <button class="nav-btn primary">Open Hanna Case Explorer →</button>
+    </a>
+  </div>
+</div>
+
+</div><!-- /app-wrap -->
+
 <script>
-// ==========================================
-// HISTORICAL CASE DATA
-// ==========================================
+'use strict';
+const JP = 'ch3_';
+const TABS = ['outside','prf','thermo','atcf','biobond','diag','journal'];
+const completedTabs = new Set();
 
-const historicalCases = {
-    mandela: {
-        name: "Nelson Mandela",
-        year: 1964,
-        age: 46,
-        location: "Robben Island Prison, South Africa",
-        context: "Sentenced to life imprisonment for opposing apartheid. Confined to 7×7 foot cell with hard labor in limestone quarry. Expected to remain imprisoned for life with no release date.",
-        
-        decision: {
-            title: "The BioBond Decision: Daily Exercise",
-            description: "Despite extreme exhaustion from hard labor, minimal nutrition, and guard mockery, should Mandela implement a rigorous daily exercise routine?",
-            pathA: {
-                name: "No Exercise (Conserve Energy)",
-                rationale: "Already exhausted from quarry work. Exercise seems pointless—won't get him released. Better to rest and conserve limited energy.",
-                expectedBy: "Most prisoners, guards who mock those who exercise"
-            },
-            pathB: {
-                name: "Daily Exercise (BioBond Protocol)",
-                rationale: "Exercise maintains somatic coherence, preserves agency, structures time, creates metabolic capacity despite conditions.",
-                expectedBy: "Mandela himself, based on understanding that prison is designed to break the spirit"
-            }
-        },
-        
-        baselineScores: {
-            // ATCF
-            A: 85, // Autobiographical - very strong identity
-            T: 42, // Temporal - critically depleted
-            C: 78, // Prospective - clear long-term vision
-            F: 82, // Meta-constructive - high adaptability
-            
-            // Derived
-            Fire: 80,
-            Ice: 85,
-            FireIceRatio: 0.94,
-            
-            // MDI components
-            MDI: 92,
-            MDI_Complexity: 95,
-            MDI_Horizon: 95,
-            MDI_Integration: 90,
-            MDI_Authenticity: 90,
-            MDI_Generativity: 90,
-            
-            // Other dimensions
-            RCS: 88,
-            AF: 85,
-            LQI: 38,
-            CPR: 72,
-            
-            Overall: 75
-        },
-        
-        timeline: [
-            {
-                month: 0,
-                event: "Decision Point",
-                description: "Begin daily exercise or conserve energy?",
-                critical: true
-            },
-            {
-                month: 3,
-                event: "Initial Phase",
-                description: "Observable changes in physical and mental state"
-            },
-            {
-                month: 12,
-                event: "First Year Assessment",
-                description: "Pattern established, long-term trajectory emerging"
-            },
-            {
-                month: 60,
-                event: "Five Year Mark",
-                description: "Identity coherence tested under prolonged stress"
-            },
-            {
-                month: 324,
-                event: "Release (1990)",
-                description: "After 27 years, capability to lead tested immediately"
-            }
-        ],
-        
-        actualOutcome: {
-            path: "B",
-            description: "Mandela exercised daily for 27 years. Emerged physically and mentally capable of leading South Africa's transition to democracy. Became President at age 75.",
-            keyQuote: "Prison is designed to break one's spirit and destroy one's resolve... I attempted to follow a program of exercise that would keep me fit.",
-            metrics: {
-                survivalYears: 27,
-                postReleaseProductivity: "Exceptional - led nation",
-                identityCoherence: "Total - became MORE himself",
-                legacyImpact: "Prevented civil war, peaceful transition"
-            }
-        },
-        
-        color: "green"
-    },
-    
-    boisjoly: {
-        name: "Roger Boisjoly",
-        year: 1986,
-        age: 49,
-        location: "Post-Challenger Disaster, Morton Thiokol",
-        context: "Senior engineer who fought the Challenger launch and was overruled. Seven astronauts died. Rogers Commission investigating. Management wants him to stay quiet.",
-        
-        decision: {
-            title: "The Testimony Decision: Full Truth",
-            description: "Should Boisjoly give full testimony about management pressure to override engineering judgment, likely ending his career?",
-            pathA: {
-                name: "Limited Testimony (Protect Career)",
-                rationale: "Stick to technical facts only. Don't expose management pressure. Preserve job, colleagues, financial security.",
-                expectedBy: "Management, colleagues, family (financial security)"
-            },
-            pathB: {
-                name: "Full Truth (Moral Courage)",
-                rationale: "Tell complete truth about management override. Accept career destruction to prevent future accidents.",
-                expectedBy: "Engineering ethics, personal integrity, future safety"
-            }
-        },
-        
-        baselineScores: {
-            A: 88,
-            T: 38, // Critically stressed post-trauma
-            C: 72,
-            F: 75,
-            
-            Fire: 73.5,
-            Ice: 88,
-            FireIceRatio: 0.835,
-            
-            MDI: 82,
-            MDI_Complexity: 75,
-            MDI_Horizon: 80,
-            MDI_Integration: 90,
-            MDI_Authenticity: 85,
-            MDI_Generativity: 80,
-            
-            RCS: 92,
-            AF: 68,
-            LQI: 45,
-            CPR: 78,
-            
-            Overall: 73
-        },
-        
-        timeline: [
-            {
-                month: 0,
-                event: "Decision Point",
-                description: "Rogers Commission testimony - limited or full?"
-            },
-            {
-                month: 1,
-                event: "Immediate Aftermath",
-                description: "Career and social consequences begin"
-            },
-            {
-                month: 6,
-                event: "Critical Juncture",
-                description: "Will identity fracture or reorganize?"
-            },
-            {
-                month: 12,
-                event: "One Year Post-Testimony",
-                description: "New morphogenetic target emerges or despair sets in"
-            },
-            {
-                month: 60,
-                event: "Five Year Assessment",
-                description: "Long-term identity and legacy trajectory"
-            }
-        ],
-        
-        actualOutcome: {
-            path: "B",
-            description: "Boisjoly gave full testimony. Was ostracized by colleagues, forced to resign, experienced severe depression. But found new purpose teaching engineering ethics. Became one of the most important voices in engineering professional responsibility.",
-            keyQuote: "I have been asked by some if I would testify again if I knew in advance of the potential consequences... My answer is always an immediate 'yes.'",
-            metrics: {
-                careerCost: "Total - forced resignation",
-                socialCost: "Severe - ostracized by colleagues",
-                identityOutcome: "Strengthened - became MORE himself",
-                legacyImpact: "Massive - changed engineering ethics education globally"
-            }
-        },
-        
-        color: "red"
-    },
-    
-    salk: {
-        name: "Jonas Salk",
-        year: 1955,
-        age: 40,
-        location: "Post-Vaccine Success, United States",
-        context: "Polio vaccine proven successful in largest medical trial in history. Could patent and become wealthiest scientist ever, or give it to humanity.",
-        
-        decision: {
-            title: "The Patent Decision: Generativity vs. Wealth",
-            description: "Patent the polio vaccine (worth ~$7 billion) or give it away to save maximum lives worldwide?",
-            pathA: {
-                name: "Patent (Financial Security)",
-                rationale: "Become wealthy, secure family's future, fund more research. Still saves hundreds of thousands of lives in wealthy nations.",
-                expectedBy: "University administrators, many colleagues, conventional wisdom"
-            },
-            pathB: {
-                name: "No Patent (Maximum Lives Saved)",
-                rationale: "Enable global distribution at minimal cost. Save millions more lives including in poor nations. 'Could you patent the sun?'",
-                expectedBy: "Public health advocates, Salk's own values"
-            }
-        },
-        
-        baselineScores: {
-            A: 82,
-            T: 88,
-            C: 90,
-            F: 78,
-            
-            Fire: 84,
-            Ice: 82,
-            FireIceRatio: 1.02,
-            
-            MDI: 95,
-            MDI_Complexity: 92,
-            MDI_Horizon: 98,
-            MDI_Integration: 88,
-            MDI_Authenticity: 95,
-            MDI_Generativity: 100,
-            
-            RCS: 90,
-            AF: 75,
-            LQI: 78,
-            CPR: 92,
-            
-            Overall: 86
-        },
-        
-        timeline: [
-            {
-                month: 0,
-                event: "Decision Point",
-                description: "Vaccine successful - patent or give away?"
-            },
-            {
-                month: 12,
-                event: "One Year Post-Decision",
-                description: "Global distribution beginning, identity shift observable"
-            },
-            {
-                month: 60,
-                event: "Five Year Mark",
-                description: "Salk Institute founded, legacy path crystallizing"
-            },
-            {
-                month: 180,
-                event: "15 Years Later",
-                description: "Full legacy impact visible, lives saved measurable"
-            },
-            {
-                month: 360,
-                event: "30 Years Later (1985)",
-                description: "Polio nearly eradicated globally"
-            }
-        ],
-        
-        actualOutcome: {
-            path: "B",
-            description: "Salk gave vaccine away. Forewent billions. Founded Salk Institute (1960). Continued productive research for decades. Became moral icon. Estimated 10-16 million lives saved globally.",
-            keyQuote: "Could you patent the sun?",
-            metrics: {
-                financialCost: "$7 billion foregone",
-                livesSaved: "10-16 million (vs ~1M if patented)",
-                identityOutcome: "Strengthened - perfect alignment",
-                legacyImpact: "Geometric - model for open science movement"
-            }
-        },
-        
-        color: "purple"
-    },
-    
-    carson: {
-        name: "Rachel Carson",
-        year: 1962,
-        age: 54,
-        location: "Terminal Breast Cancer, United States",
-        context: "Dying of breast cancer, ~2 years to live. Chemical industry launching massive attacks calling her 'hysterical woman.' Could rest peacefully or fight to publish Silent Spring.",
-        
-        decision: {
-            title: "The Silent Spring Decision: Legacy Over Rest",
-            description: "Use final metabolic energy to write/defend book exposing pesticide industry, enduring attacks while dying?",
-            pathA: {
-                name: "Rest Peacefully (Self-Care)",
-                rationale: "Dying anyway. Enjoy remaining time with family and nature. Avoid stress of industry attacks.",
-                expectedBy: "Doctors, family who love her"
-            },
-            pathB: {
-                name: "Fight While Dying (Legacy)",
-                rationale: "Final chance to create CIB that will outlive you. Endure attacks to save future generations from pesticides.",
-                expectedBy: "Environmental movement, Carson's own mission"
-            }
-        },
-        
-        baselineScores: {
-            A: 90,
-            T: 25, // Critically low - dying
-            C: 95, // Extremely high - vision extends beyond death
-            F: 65,
-            
-            Fire: 80,
-            Ice: 90,
-            FireIceRatio: 0.89,
-            
-            MDI: 98,
-            MDI_Complexity: 95,
-            MDI_Horizon: 100, // Transgenerational
-            MDI_Integration: 95,
-            MDI_Authenticity: 98,
-            MDI_Generativity: 100,
-            
-            RCS: 88,
-            AF: 62,
-            LQI: 30, // Terminal illness
-            CPR: 95, // Final burst
-            
-            Overall: 72 // High meaning despite physical crisis
-        },
-        
-        timeline: [
-            {
-                month: 0,
-                event: "Decision Point",
-                description: "Write/defend book or rest peacefully?"
-            },
-            {
-                month: 6,
-                event: "Silent Spring Published",
-                description: "Massive industry attacks begin"
-            },
-            {
-                month: 12,
-                event: "One Year - Still Fighting",
-                description: "Defending book while health deteriorates"
-            },
-            {
-                month: 24,
-                event: "Death (1964)",
-                description: "Dies before seeing EPA created"
-            },
-            {
-                month: 96,
-                event: "8 Years Later (1970)",
-                description: "EPA created, DDT banned - her CIB wins"
-            }
-        },
-        
-        actualOutcome: {
-            path: "B",
-            description: "Carson wrote and defended Silent Spring while dying. Endured vicious attacks. Died in 1964. EPA created 1970. Modern environmental movement credits her as founder. Her CIB compounds forever.",
-            keyQuote: "We stand now where two roads diverge... The road we have long been traveling is deceptively easy... The other fork of the road is the one less traveled... but our only chance to reach a destination that assures the preservation of the earth.",
-            metrics: {
-                personalCost: "Died in pain, under attack",
-                restForegone: "All remaining peace",
-                identityOutcome: "Total alignment - died as herself",
-                legacyImpact: "Infinite - environmental movement founded"
-            }
-        },
-        
-        color: "cyan"
+// ── Tab navigation ────────────────────────────────────────────
+function showTab(name, btn){
+  TABS.forEach(t=>{
+    const pane = document.getElementById('pane-'+t);
+    if(pane){ pane.style.display='none'; pane.classList.remove('active'); }
+  });
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.classList.remove('active');
+    b.setAttribute('aria-selected','false');
+  });
+  const pane = document.getElementById('pane-'+name);
+  if(pane){ pane.style.display='block'; pane.classList.add('active'); pane.scrollIntoView({behavior:'smooth',block:'start'}); }
+  if(btn){ btn.classList.add('active'); btn.setAttribute('aria-selected','true'); }
+  completedTabs.add(name);
+  updateProgress();
+}
+
+function updateProgress(){
+  const pct = Math.round((completedTabs.size / TABS.length) * 100);
+  const fill = document.getElementById('progressFill');
+  if(fill) fill.style.width = pct + '%';
+  TABS.forEach(t=>{
+    if(completedTabs.has(t)){
+      const btn = document.getElementById('tb-'+t);
+      if(btn && !btn.classList.contains('done')) btn.classList.add('done');
     }
-};
+  });
+}
 
-// ==========================================
-// SIMULATION ENGINE
-// ==========================================
+// ── Journal storage ───────────────────────────────────────────
+function jSave(k, v){
+  try{
+    localStorage.setItem(JP+k, v);
+    const sn = document.getElementById('sn-'+k) || document.getElementById('sn-q5');
+    if(sn && k==='cq5'){ const el=document.getElementById('sn-q5'); if(el){el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2000);} return; }
+    if(sn){ sn.classList.add('show'); setTimeout(()=>sn.classList.remove('show'),2000); }
+  }catch(e){}
+}
 
-function simulateTrajectory(baselineScores, decisionParams, path, timeHorizon) {
-    const trajectory = [];
-    let state = {
-        month: 0,
-        A: baselineScores.A,
-        T: baselineScores.T,
-        C: baselineScores.C,
-        F: baselineScores.F,
-        MDI: baselineScores.MDI,
-        RCS: baselineScores.RCS,
-        AF: baselineScores.AF,
-        LQI: baselineScores.LQI,
-        CPR: baselineScores.CPR,
-        Fire: baselineScores.Fire,
-        Ice: baselineScores.Ice,
-        FireIceRatio: baselineScores.FireIceRatio
-    };
-    
-    // Path-specific modifiers
-    const modifiers = path === 'A' ? decisionParams.pathAModifiers : decisionParams.pathBModifiers;
-    
-    for (let month = 0; month <= timeHorizon; month++) {
-        // Apply time-dependent changes based on path
-        if (month > 0) {
-            // Apply modifiers
-            Object.keys(modifiers).forEach(key => {
-                const modifier = modifiers[key];
-                if (typeof modifier === 'function') {
-                    state[key] = modifier(state[key], month, state);
-                } else if (typeof modifier === 'number') {
-                    state[key] = Math.max(0, Math.min(100, state[key] + (modifier / timeHorizon)));
-                }
-            });
-            
-            // Recalculate derived metrics
-            state.Fire = (state.C + state.F) / 2;
-            state.Ice = state.A;
-            state.FireIceRatio = state.Ice > 0 ? state.Fire / state.Ice : 0;
-        }
-        
-        trajectory.push({
-            month,
-            ...JSON.parse(JSON.stringify(state))
-        });
+function jLoad(k){
+  try{ return localStorage.getItem(JP+k)||''; }catch(e){ return ''; }
+}
+
+function loadJournal(){
+  ['q1','q2','q3','q4'].forEach(k=>{
+    const el = document.getElementById('jt-'+k);
+    if(el) el.value = jLoad(k);
+  });
+  const q5el = document.getElementById('jt-q5');
+  if(q5el) q5el.value = jLoad('cq5');
+}
+
+// ── Retrieve Ch2 Q5 prediction ────────────────────────────────
+(function loadCh2Pred(){
+  try{
+    const pred = localStorage.getItem('ch2_cq5') || '';
+    const el = document.getElementById('ch2PredDisplay');
+    if(el){ el.textContent = pred.trim() ? pred : 'No Chapter 2 prediction found. Complete Chapter 2 journal Q5 first.'; }
+  }catch(e){}
+})();
+
+// ── ATCF sliders ──────────────────────────────────────────────
+const atcfVals = {hc:8, pi:9, pc:9, mcc:8};
+
+function updateATCF(k, v){
+  atcfVals[k] = parseInt(v);
+  const valEl = document.getElementById(k+'-val');
+  if(valEl) valEl.textContent = v;
+  const sl = document.getElementById(k+'-sl');
+  if(sl) sl.style.background = `linear-gradient(90deg,var(--teal-dark) ${v*10}%,var(--border) ${v*10}%)`;
+  const total = Object.values(atcfVals).reduce((a,b)=>a+b,0);
+  const totEl = document.getElementById('atcf-total');
+  if(totEl) totEl.textContent = total;
+  try{ localStorage.setItem(JP+'atcf_'+k, v); }catch(e){}
+}
+
+// ── Structural diagnostic ─────────────────────────────────────
+const diagVals = {entropy:0.35, stress:0.30, biobond:0.55};
+
+function updateDiag(k, v, isRisk){
+  diagVals[k] = parseFloat(v)/100;
+  const el = document.getElementById('dv-'+k);
+  const sl = document.getElementById('d-'+k);
+  const val = diagVals[k].toFixed(2);
+  if(el){ el.textContent = val; el.style.color = isRisk ? (diagVals[k]>0.65?'var(--danger)':diagVals[k]>0.40?'var(--amber)':'var(--success)') : (diagVals[k]>0.65?'var(--success)':diagVals[k]>0.40?'var(--amber)':'var(--danger)'); }
+  const pct = v + '%';
+  if(sl) sl.style.background = isRisk
+    ? `linear-gradient(90deg,#dc2626 ${pct},var(--border) ${pct})`
+    : `linear-gradient(90deg,var(--teal-dark) ${pct},var(--border) ${pct})`;
+  updateDiagReading();
+  try{ localStorage.setItem(JP+'diag_'+k, v); }catch(e){}
+}
+
+function updateDiagReading(){
+  const {entropy, stress, biobond} = diagVals;
+  const combined = entropy + stress;
+  let reading = '';
+  if(combined > 1.30){
+    reading = `Your combined entropy (${entropy.toFixed(2)}) and stress (${stress.toFixed(2)}) = ${combined.toFixed(2)} — above the threshold where the Sapolsky gate closes for most people. Your BioBond (${biobond.toFixed(2)}) ${biobond > 0.60 ? 'is providing meaningful structural protection, but' : 'is not providing sufficient counterweight —'} your deliberate reasoning capacity is operating under significant structural constraint right now.`;
+  } else if(combined > 0.90){
+    reading = `Moderate combined load (${combined.toFixed(2)}). Your BioBond (${biobond.toFixed(2)}) ${biobond > 0.50 ? 'is helping maintain your ethical agency' : 'is relatively thin — worth examining what you can do to strengthen it'}. You are operating near but not past the Sapolsky threshold under current conditions.`;
+  } else {
+    reading = `Relatively low combined load (${combined.toFixed(2)}) and BioBond (${biobond.toFixed(2)}) ${biobond > 0.60 ? 'is robust' : 'is present but worth developing'}. These are good structural conditions for deliberate ethical reasoning. The question for this chapter: what maintains them, and what would destabilize them?`;
+  }
+  const el = document.getElementById('diag-text');
+  if(el) el.textContent = reading;
+}
+
+// ── Init ──────────────────────────────────────────────────────
+loadJournal();
+updateDiagReading();
+// Restore ATCF sliders
+['hc','pi','pc','mcc'].forEach(k=>{
+  try{
+    const saved = localStorage.getItem(JP+'atcf_'+k);
+    if(saved) updateATCF(k, parseInt(saved));
+  }catch(e){}
+});
+// Restore diagnostic sliders
+['entropy','stress','biobond'].forEach(k=>{
+  try{
+    const saved = localStorage.getItem(JP+'diag_'+k);
+    if(saved){
+      const sl = document.getElementById('d-'+k);
+      if(sl){ sl.value = saved; updateDiag(k, saved, k!=='biobond'); }
     }
-    
-    return trajectory;
-}
-
-// ==========================================
-// CASE-SPECIFIC SIMULATION PARAMETERS
-// ==========================================
-
-const simulationParameters = {
-    mandela: {
-        timeHorizon: 324, // 27 years
-        pathAModifiers: {
-            // No exercise - gradual degradation
-            T: (val, month) => Math.max(20, val - 0.05 * month),
-            F: (val, month) => month < 12 ? val - 0.1 * month : Math.max(40, val - 0.15 * (month - 12)),
-            C: (val, month) => month < 24 ? val : Math.max(50, val - 0.08 * (month - 24)),
-            A: (val, month) => month < 36 ? val : Math.max(50, val - 0.1 * (month - 36)),
-            LQI: (val, month) => Math.max(15, val - 0.05 * month)
-        },
-        pathBModifiers: {
-            // Exercise - stabilization then improvement
-            T: (val, month) => {
-                if (month < 3) return Math.max(38, val - 0.5);
-                if (month < 12) return Math.min(60, val + 0.8);
-                return Math.min(65, val + 0.02);
-            },
-            LQI: (val, month) => {
-                if (month < 6) return Math.min(50, val + 1.5);
-                return Math.min(55, val + 0.05);
-            },
-            F: (val, month) => Math.min(85, val + 0.01),
-            CPR: (val, month) => Math.min(82, val + 0.02)
-        }
-    },
-    
-    boisjoly: {
-        timeHorizon: 60, // 5 years critical period
-        pathAModifiers: {
-            // Limited testimony - moral injury
-            T: -5,
-            A: (val, month) => month < 6 ? val - 1 : Math.max(45, val - 1.5),
-            MDI: (val, month) => month < 12 ? val - 1.2 : Math.max(40, val - 1),
-            LQI: (val, month) => Math.max(25, val - 0.4 * month),
-            F: (val, month) => Math.max(40, val - 0.3 * month)
-        },
-        pathBModifiers: {
-            // Full truth - crisis then recovery
-            T: (val, month) => {
-                if (month < 2) return Math.max(25, val - 8);
-                if (month < 12) return Math.min(50, val + 1.5);
-                return Math.min(65, val + 0.5);
-            },
-            A: (val, month) => month < 6 ? val + 0.5 : Math.min(95, val + 0.3),
-            C: (val, month) => month < 6 ? val + 2 : Math.min(88, val + 0.4),
-            CPR: (val, month) => month < 12 ? val + 0.5 : Math.min(92, val + 0.2),
-            LQI: (val, month) => {
-                if (month < 6) return Math.max(25, val - 2);
-                if (month < 24) return Math.min(65, val + 1);
-                return Math.min(72, val + 0.3);
-            }
-        }
-    },
-    
-    salk: {
-        timeHorizon: 360, // 30 years
-        pathAModifiers: {
-            // Patent - wealth but moral injury
-            T: +10,
-            MDI: (val, month) => month < 12 ? val : Math.max(60, val - 0.15 * (month / 12)),
-            A: (val, month) => month < 24 ? val - 0.4 : Math.max(50, val - 0.5),
-            CPR: (val, month) => Math.max(45, val - 0.15 * (month / 12)),
-            LQI: (val, month) => {
-                if (month < 12) return Math.min(88, val + 0.5);
-                return Math.max(50, val - 0.1 * (month / 12));
-            }
-        },
-        pathBModifiers: {
-            // No patent - perfect alignment
-            A: (val, month) => Math.min(95, val + 0.02),
-            C: (val, month) => Math.min(95, val + 0.015),
-            CPR: (val, month) => Math.min(100, val + 0.025),
-            MDI: (val, month) => Math.min(98, val + 0.01),
-            Fire: (val, month) => Math.min(95, val + 0.02)
-        }
-    },
-    
-    carson: {
-        timeHorizon: 24, // 2 years until death
-        pathAModifiers: {
-            // Rest - physical comfort, identity erosion
-            T: (val, month) => Math.max(15, val - 0.3 * month),
-            LQI: (val, month) => Math.min(45, val + 0.5 * month),
-            C: (val, month) => Math.max(60, val - 1.5 * month),
-            CPR: (val, month) => Math.max(20, val - 3 * month)
-        },
-        pathBModifiers: {
-            // Fight - physical decline, identity crystallization
-            T: (val, month) => Math.max(10, val - 0.6 * month),
-            A: (val, month) => Math.min(98, val + 0.3 * month),
-            C: (val, month) => Math.min(100, val + 0.2 * month),
-            CPR: (val, month) => Math.min(100, val + 0.4 * month),
-            MDI: (val, month) => Math.min(100, val + 0.15 * month),
-            LQI: (val, month) => Math.max(15, val - 0.6 * month)
-        }
-    }
-};
-
-// ==========================================
-// UI CONTROL FUNCTIONS
-// ==========================================
-
-function showCaseSelection() {
-    document.getElementById('intro').classList.add('hidden');
-    document.getElementById('case-selection').classList.remove('hidden');
-}
-
-let currentCase = null;
-let simulationResults = null;
-
-function loadCase(caseId) {
-    if (caseId === 'comparative') {
-        displayComparativeAnalysis();
-        return;
-    }
-    
-    currentCase = historicalCases[caseId];
-    document.getElementById('case-selection').classList.add('hidden');
-    document.getElementById('case-display').classList.remove('hidden');
-    
-    displayCase(caseId);
-}
-
-// ==========================================
-// CASE DISPLAY
-// ==========================================
-
-function displayCase(caseId) {
-    const caseData = historicalCases[caseId];
-    const container = document.getElementById('case-display');
-    
-    const colorClass = `gradient-${caseData.color}`;
-    
-    container.innerHTML = `
-        <div class="space-y-8">
-            <!-- Header -->
-            <div class="flex items-center gap-4 mb-6">
-                <button onclick="backToSelection()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                    ← Back to Cases
-                </button>
-                <h2 class="text-3xl font-bold text-gray-900">${caseData.name} - ${caseData.year}</h2>
-            </div>
-            
-            <!-- Case Overview -->
-            <section class="bg-white rounded-2xl shadow-xl overflow-hidden">
-                <div class="${colorClass} p-8 text-white">
-                    <h3 class="text-2xl font-bold mb-2">${caseData.decision.title}</h3>
-                    <div class="grid md:grid-cols-2 gap-4 mt-4 text-sm">
-                        <div>
-                            <span class="opacity-75">Age:</span> <strong>${caseData.age}</strong>
-                        </div>
-                        <div>
-                            <span class="opacity-75">Location:</span> <strong>${caseData.location}</strong>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="p-8">
-                    <h4 class="font-bold text-gray-900 mb-3">Historical Context:</h4>
-                    <p class="text-gray-700 mb-6">${caseData.context}</p>
-                    
-                    <h4 class="font-bold text-gray-900 mb-3">The Critical Decision:</h4>
-                    <p class="text-gray-700 mb-4">${caseData.decision.description}</p>
-                </div>
-            </section>
-            
-            <!-- Assessment Scores -->
-            <section class="bg-white rounded-2xl shadow-xl p-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Baseline Assessment Scores (${caseData.year})</h3>
-                
-                <div class="grid md:grid-cols-2 gap-8 mb-8">
-                    <div>
-                        <h4 class="font-bold text-gray-900 mb-4">ATCF Components:</h4>
-                        ${generateScoreBar('A - Autobiographical (Ice)', caseData.baselineScores.A, 'blue')}
-                        ${generateScoreBar('T - Temporal (Flux)', caseData.baselineScores.T, 'green')}
-                        ${generateScoreBar('C - Prospective (Fire)', caseData.baselineScores.C, 'orange')}
-                        ${generateScoreBar('F - Meta-Constructive', caseData.baselineScores.F, 'purple')}
-                        
-                        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                            <div class="text-sm text-gray-700 space-y-1">
-                                <div class="flex justify-between">
-                                    <span>Fire/Ice Ratio:</span>
-                                    <strong class="${caseData.baselineScores.FireIceRatio >= 0.70 ? 'metric-good' : 'metric-critical'}">
-                                        ${caseData.baselineScores.FireIceRatio.toFixed(2)}
-                                    </strong>
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    ${caseData.baselineScores.FireIceRatio >= 0.70 ? '✓ Sustainable' : '⚠️ Unsustainable'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <h4 class="font-bold text-gray-900 mb-4">Five Dimensions:</h4>
-                        ${generateScoreBar('Meaning Depth (MDI)', caseData.baselineScores.MDI, 'purple')}
-                        ${generateScoreBar('Rational Capacity (RCS)', caseData.baselineScores.RCS, 'blue')}
-                        ${generateScoreBar('Annealing Fluency (AF)', caseData.baselineScores.AF, 'green')}
-                        ${generateScoreBar('Life Quality (LQI)', caseData.baselineScores.LQI, 'orange')}
-                        ${generateScoreBar('CIB Production (CPR)', caseData.baselineScores.CPR, 'red')}
-                        
-                        <div class="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-200">
-                            <div class="text-sm text-gray-700">
-                                <div class="flex justify-between items-center">
-                                    <span>Overall Flourishing:</span>
-                                    <strong class="text-3xl ${getScoreColor(caseData.baselineScores.Overall)}">
-                                        ${caseData.baselineScores.Overall}
-                                    </strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                    <p class="text-sm text-yellow-900">
-                        <strong>Key Vulnerabilities:</strong> ${identifyVulnerabilities(caseData.baselineScores)}
-                    </p>
-                </div>
-            </section>
-            
-            <!-- Decision Paths -->
-            <section class="bg-white rounded-2xl shadow-xl p-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Two Possible Paths</h3>
-                
-                <div class="grid md:grid-cols-2 gap-6 mb-8">
-                    <div class="path-a border-4 rounded-xl p-6">
-                        <h4 class="text-xl font-bold text-red-900 mb-3">PATH A: ${caseData.decision.pathA.name}</h4>
-                        <p class="text-sm text-gray-700 mb-4">${caseData.decision.pathA.rationale}</p>
-                        <div class="text-xs text-gray-600">
-                            <strong>Expected by:</strong> ${caseData.decision.pathA.expectedBy}
-                        </div>
-                    </div>
-                    
-                    <div class="path-b border-4 rounded-xl p-6">
-                        <h4 class="text-xl font-bold text-green-900 mb-3">PATH B: ${caseData.decision.pathB.name}</h4>
-                        <p class="text-sm text-gray-700 mb-4">${caseData.decision.pathB.rationale}</p>
-                        <div class="text-xs text-gray-600">
-                            <strong>Expected by:</strong> ${caseData.decision.pathB.expectedBy}
-                        </div>
-                    </div>
-                </div>
-                
-                <button onclick="runSimulation('${caseId}')" class="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-xl hover:from-indigo-700 hover:to-purple-700 shadow-lg">
-                    Run Thermodynamic Simulation
-                </button>
-            </section>
-            
-            <!-- Simulation Results (will be populated) -->
-            <div id="simulation-results"></div>
-            
-            <!-- Actual Outcome (initially hidden) -->
-            <div id="actual-outcome" class="hidden"></div>
-        </div>
-    `;
-}
-
-function generateScoreBar(label, score, color) {
-    const colorClass = getScoreColor(score);
-    const widthPercent = score;
-    
-    return `
-        <div class="mb-4">
-            <div class="flex justify-between text-sm text-gray-700 mb-1">
-                <span>${label}</span>
-                <strong class="${colorClass}">${score}</strong>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-3">
-                <div class="bg-${color}-500 h-3 rounded-full transition-all" style="width: ${widthPercent}%"></div>
-            </div>
-        </div>
-    `;
-}
-
-function getScoreColor(score) {
-    if (score >= 70) return 'metric-excellent';
-    if (score >= 55) return 'metric-good';
-    if (score >= 40) return 'metric-warning';
-    return 'metric-critical';
-}
-
-function identifyVulnerabilities(scores) {
-    const vulnerabilities = [];
-    
-    if (scores.T < 45) vulnerabilities.push(`Critical metabolic depletion (T=${scores.T})`);
-    if (scores.LQI < 45) vulnerabilities.push(`Life quality unsustainable (LQI=${scores.LQI})`);
-    if (scores.FireIceRatio < 0.70) vulnerabilities.push(`Fire/Ice ratio below sustainability threshold`);
-    if (scores.C < 50) vulnerabilities.push(`Future horizon collapsed (C=${scores.C})`);
-    
-    return vulnerabilities.length > 0 ? vulnerabilities.join('; ') : 'No critical vulnerabilities detected';
-}
-
-// ==========================================
-// SIMULATION EXECUTION
-// ==========================================
-
-function runSimulation(caseId) {
-    const caseData = historicalCases[caseId];
-    const params = simulationParameters[caseId];
-    
-    // Run both paths
-    const trajectoryA = simulateTrajectory(
-        caseData.baselineScores,
-        params,
-        'A',
-        params.timeHorizon
-    );
-    
-    const trajectoryB = simulateTrajectory(
-        caseData.baselineScores,
-        params,
-        'B',
-        params.timeHorizon
-    );
-    
-    simulationResults = {
-        caseId,
-        trajectoryA,
-        trajectoryB,
-        actualPath: caseData.actualOutcome.path
-    };
-    
-    displaySimulationResults(caseId, trajectoryA, trajectoryB);
-    
-    // Scroll to results
-    setTimeout(() => {
-        document.getElementById('simulation-results').scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-}
-
-function displaySimulationResults(caseId, trajectoryA, trajectoryB) {
-    const container = document.getElementById('simulation-results');
-    const caseData = historicalCases[caseId];
-    
-    container.innerHTML = `
-        <section class="bg-white rounded-2xl shadow-xl p-8">
-            <h3 class="text-2xl font-bold text-gray-900 mb-6">Simulation Results: Predicted Trajectories</h3>
-            
-            <!-- Chart Selection -->
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Select Metric to Display:</label>
-                <select id="metric-selector" onchange="updateChart('${caseId}')" class="w-full md:w-auto px-4 py-2 border-2 border-gray-300 rounded-lg">
-                    <option value="FireIceRatio">Fire/Ice Ratio (Sustainability)</option>
-                    <option value="A">A - Autobiographical Continuity</option>
-                    <option value="T">T - Temporal Integration</option>
-                    <option value="C">C - Prospective Coherence</option>
-                    <option value="F">F - Meta-Constructive</option>
-                    <option value="MDI">Meaning Depth Index</option>
-                    <option value="LQI">Life Quality Integration</option>
-                    <option value="CPR">CIB Production Rate</option>
-                </select>
-            </div>
-            
-            <!-- Chart -->
-            <div class="bg-gray-50 rounded-xl p-6 mb-8">
-                <canvas id="trajectory-chart" height="100"></canvas>
-            </div>
-            
-            <!-- Timeline Comparison -->
-            <div class="grid md:grid-cols-2 gap-6 mb-8">
-                <div class="path-a border-4 rounded-xl p-6">
-                    <h4 class="text-xl font-bold text-red-900 mb-4">PATH A: ${caseData.decision.pathA.name}</h4>
-                    ${generateTimelineEvents(caseId, trajectoryA, 'A')}
-                </div>
-                
-                <div class="path-b border-4 rounded-xl p-6">
-                    <h4 class="text-xl font-bold text-green-900 mb-4">PATH B: ${caseData.decision.pathB.name}</h4>
-                    ${generateTimelineEvents(caseId, trajectoryB, 'B')}
-                </div>
-            </div>
-            
-            <!-- Key Predictions -->
-            <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-blue-200 mb-6">
-                <h4 class="font-bold text-gray-900 mb-4">Key Predictions:</h4>
-                ${generateKeyPredictions(caseId, trajectoryA, trajectoryB)}
-            </div>
-            
-            <button onclick="revealActualOutcome('${caseId}')" class="w-full py-4 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-bold text-xl hover:from-green-700 hover:to-emerald-700 shadow-lg">
-                Reveal What Actually Happened
-            </button>
-        </section>
-    `;
-    
-    // Render initial chart
-    setTimeout(() => updateChart(caseId), 100);
-}
-
-function generateTimelineEvents(caseId, trajectory, path) {
-    const caseData = historicalCases[caseId];
-    const keyPoints = caseData.timeline;
-    
-    return `
-        <div class="space-y-4">
-            ${keyPoints.map(point => {
-                const state = trajectory.find(t => t.month === point.month);
-                if (!state) return '';
-                
-                return `
-                    <div class="timeline-node pl-12 relative">
-                        <div class="absolute left-0 top-0 w-10 h-10 bg-${path === 'A' ? 'red' : 'green'}-500 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                            ${point.month}m
-                        </div>
-                        <div>
-                            <h5 class="font-bold text-gray-900">${point.event}</h5>
-                            <p class="text-sm text-gray-600 mb-2">${point.description}</p>
-                            <div class="grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                    <span class="text-gray-500">Fire/Ice:</span>
-                                    <strong class="${state.FireIceRatio >= 0.70 ? 'metric-good' : 'metric-critical'}">
-                                        ${state.FireIceRatio.toFixed(2)}
-                                    </strong>
-                                </div>
-                                <div>
-                                    <span class="text-gray-500">T-score:</span>
-                                    <strong class="${getScoreColor(state.T)}">${Math.round(state.T)}</strong>
-                                </div>
-                                <div>
-                                    <span class="text-gray-500">A-score:</span>
-                                    <strong class="${getScoreColor(state.A)}">${Math.round(state.A)}</strong>
-                                </div>
-                                <div>
-                                    <span class="text-gray-500">LQI:</span>
-                                    <strong class="${getScoreColor(state.LQI)}">${Math.round(state.LQI)}</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-}
-
-function generateKeyPredictions(caseId, trajectoryA, trajectoryB) {
-    const finalA = trajectoryA[trajectoryA.length - 1];
-    const finalB = trajectoryB[trajectoryB.length - 1];
-    
-    const predictions = [];
-    
-    // Fire/Ice sustainability
-    if (finalA.FireIceRatio < 0.60) {
-        predictions.push(`
-            <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg mb-3">
-                <strong class="text-red-900">PATH A PREDICTION:</strong>
-                <span class="text-red-800"> Thermodynamically unsustainable. Fire/Ice ratio drops to ${finalA.FireIceRatio.toFixed(2)} - identity collapse likely.</span>
-            </div>
-        `);
-    }
-    
-    if (finalB.FireIceRatio >= 0.70) {
-        predictions.push(`
-            <div class="p-4 bg-green-50 border-l-4 border-green-500 rounded-r-lg mb-3">
-                <strong class="text-green-900">PATH B PREDICTION:</strong>
-                <span class="text-green-800"> Thermodynamically sustainable. Fire/Ice ratio maintains at ${finalB.FireIceRatio.toFixed(2)} - flourishing trajectory.</span>
-            </div>
-        `);
-    }
-    
-    // Identity coherence
-    if (finalA.A < finalB.A - 10) {
-        predictions.push(`
-            <div class="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-r-lg mb-3">
-                <strong class="text-yellow-900">IDENTITY PREDICTION:</strong>
-                <span class="text-yellow-800"> Path B maintains stronger autobiographical continuity (A: ${Math.round(finalB.A)} vs ${Math.round(finalA.A)}). Path A risks identity fracture.</span>
-            </div>
-        `);
-    }
-    
-    // CIB production
-    if (finalB.CPR > finalA.CPR + 10) {
-        predictions.push(`
-            <div class="p-4 bg-purple-50 border-l-4 border-purple-500 rounded-r-lg mb-3">
-                <strong class="text-purple-900">LEGACY PREDICTION:</strong>
-                <span class="text-purple-800"> Path B produces significantly more enduring CIBs (CPR: ${Math.round(finalB.CPR)} vs ${Math.round(finalA.CPR)}). Greater transgenerational impact.</span>
-            </div>
-        `);
-    }
-    
-    return predictions.join('') || '<p class="text-gray-600">Both paths show similar long-term outcomes.</p>';
-}
-
-// ==========================================
-// CHART RENDERING
-// ==========================================
-
-let currentChart = null;
-
-function updateChart(caseId) {
-    const metric = document.getElementById('metric-selector').value;
-    
-    if (currentChart) {
-        currentChart.destroy();
-    }
-    
-    const trajectoryA = simulationResults.trajectoryA;
-    const trajectoryB = simulationResults.trajectoryB;
-    
-    const ctx = document.getElementById('trajectory-chart');
-    
-    const labels = trajectoryA.map(t => t.month);
-    const dataA = trajectoryA.map(t => t[metric]);
-    const dataB = trajectoryB.map(t => t[metric]);
-    
-    // Add sustainability threshold line for FireIceRatio
-    const annotations = metric === 'FireIceRatio' ? [{
-        type: 'line',
-        yMin: 0.70,
-        yMax: 0.70,
-        borderColor: 'rgb(16, 185, 129)',
-        borderWidth: 2,
-        borderDash: [5, 5],
-        label: {
-            content: 'Sustainability Threshold (0.70)',
-            enabled: true,
-            position: 'end'
-        }
-    }] : [];
-    
-    currentChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Path A (Not Chosen)',
-                    data: dataA,
-                    borderColor: 'rgb(239, 68, 68)',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    tension: 0.3,
-                    borderWidth: 3
-                },
-                {
-                    label: 'Path B (Chosen)',
-                    data: dataB,
-                    borderColor: 'rgb(16, 185, 129)',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.3,
-                    borderWidth: 3
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top'
-                },
-                title: {
-                    display: true,
-                    text: `${getMetricName(metric)} Over Time (Months)`,
-                    font: {
-                        size: 16,
-                        weight: 'bold'
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: metric !== 'FireIceRatio',
-                    max: metric === 'FireIceRatio' ? 1.5 : 100,
-                    title: {
-                        display: true,
-                        text: metric === 'FireIceRatio' ? 'Ratio' : 'Score (0-100)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Months'
-                    }
-                }
-            }
-        }
-    });
-}
-
-function getMetricName(metric) {
-    const names = {
-        'FireIceRatio': 'Fire/Ice Sustainability Ratio',
-        'A': 'Autobiographical Continuity (Ice)',
-        'T': 'Temporal Integration (Flux)',
-        'C': 'Prospective Coherence (Fire)',
-        'F': 'Meta-Constructive Capacity (Annealing)',
-        'MDI': 'Meaning Depth Index',
-        'LQI': 'Life Quality Integration',
-        'CPR': 'CIB Production Rate'
-    };
-    return names[metric] || metric;
-}
-
-// ==========================================
-// ACTUAL OUTCOME REVEAL
-// ==========================================
-
-function revealActualOutcome(caseId) {
-    const caseData = historicalCases[caseId];
-    const outcome = caseData.actualOutcome;
-    const container = document.getElementById('actual-outcome');
-    
-    container.classList.remove('hidden');
-    container.innerHTML = `
-        <section class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl shadow-xl p-8 border-4 border-green-400">
-            <div class="flex items-center gap-3 mb-6">
-                <span class="text-5xl">✓</span>
-                <h3 class="text-3xl font-bold text-gray-900">What Actually Happened</h3>
-            </div>
-            
-            <div class="bg-white rounded-xl p-6 mb-6">
-                <div class="flex items-center gap-4 mb-4">
-                    <span class="px-6 py-3 bg-green-600 text-white rounded-full font-bold text-xl">
-                        ${caseData.name} chose PATH ${outcome.path}
-                    </span>
-                </div>
-                
-                <p class="text-lg text-gray-700 mb-6">${outcome.description}</p>
-                
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
-                    <p class="text-blue-900 italic text-lg">
-                        "${outcome.keyQuote}"
-                    </p>
-                    <p class="text-sm text-blue-700 mt-2">— ${caseData.name}</p>
-                </div>
-                
-                <h4 class="font-bold text-gray-900 mb-4">Actual Outcomes (Historical Record):</h4>
-                <div class="grid md:grid-cols-2 gap-4">
-                    ${Object.entries(outcome.metrics).map(([key, value]) => `
-                        <div class="p-4 bg-gray-50 rounded-lg">
-                            <div class="text-sm text-gray-600 mb-1">${formatMetricName(key)}</div>
-                            <div class="font-semibold text-gray-900">${value}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-            
-            ${generateValidationAnalysis(caseId)}
-            
-            <div class="mt-6">
-                <button onclick="showDiscussionQuestions('${caseId}')" class="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700">
-                    Discussion Questions for Class
-                </button>
-            </div>
-        </section>
-    `;
-    
-    setTimeout(() => {
-        container.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-}
-
-function formatMetricName(key) {
-    return key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-}
-
-function generateValidationAnalysis(caseId) {
-    const caseData = historicalCases[caseId];
-    const outcome = caseData.actualOutcome;
-    const chosenPath = outcome.path === 'A' ? simulationResults.trajectoryA : simulationResults.trajectoryB;
-    const final = chosenPath[chosenPath.length - 1];
-    
-    // Check if predictions matched reality
-    const validations = [];
-    
-    if (outcome.path === 'B' && final.FireIceRatio >= 0.70) {
-        validations.push({
-            prediction: "Thermodynamic sustainability maintained",
-            actual: "Confirmed - maintained coherence long-term",
-            match: true
-        });
-    }
-    
-    if (outcome.path === 'B' && final.A > caseData.baselineScores.A) {
-        validations.push({
-            prediction: "Identity strengthened (A-score increases)",
-            actual: outcome.identityOutcome || "Identity strengthened",
-            match: true
-        });
-    }
-    
-    if (outcome.path === 'B' && final.CPR > caseData.baselineScores.CPR) {
-        validations.push({
-            prediction: "CIB production increased",
-            actual: outcome.legacyImpact || "Significant legacy created",
-            match: true
-        });
-    }
-    
-    return `
-        <div class="bg-purple-50 rounded-xl p-6 border-2 border-purple-300">
-            <h4 class="font-bold text-purple-900 mb-4">Model Validation: Did Our Predictions Match Reality?</h4>
-            <div class="space-y-3">
-                ${validations.map(v => `
-                    <div class="flex items-start gap-3 p-3 bg-white rounded-lg">
-                        <span class="text-2xl flex-shrink-0">${v.match ? '✓' : '✗'}</span>
-                        <div class="flex-1">
-                            <div class="font-semibold text-gray-900">Prediction: ${v.prediction}</div>
-                            <div class="text-sm text-gray-700">Actual: ${v.actual}</div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            
-            <div class="mt-4 p-4 bg-white rounded-lg border-2 border-green-400">
-                <p class="text-sm text-gray-900">
-                    <strong class="text-green-700">Validation Result:</strong> 
-                    Our thermodynamic model correctly predicted the trajectory ${caseData.name} would experience by choosing Path ${outcome.path}.
-                    This suggests the CIB Thermodynamics framework captures real patterns of human flourishing.
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-// ==========================================
-// DISCUSSION QUESTIONS
-// ==========================================
-
-function showDiscussionQuestions(caseId) {
-    const caseData = historicalCases[caseId];
-    const questions = generateDiscussionQuestions(caseId);
-    
-    const container = document.getElementById('actual-outcome');
-    container.innerHTML += `
-        <section class="bg-white rounded-2xl shadow-xl p-8 mt-8">
-            <h3 class="text-2xl font-bold text-gray-900 mb-6">Discussion Questions for Class</h3>
-            
-            <div class="space-y-6">
-                ${questions.map((q, idx) => `
-                    <details class="border-2 border-gray-200 rounded-xl overflow-hidden">
-                        <summary class="p-5 bg-gray-50 cursor-pointer hover:bg-gray-100 font-semibold text-gray-900">
-                            ${idx + 1}. ${q.question}
-                        </summary>
-                        <div class="p-5 space-y-3">
-                            <div>
-                                <h5 class="font-bold text-gray-900 mb-2">Consider:</h5>
-                                <ul class="list-disc list-inside space-y-1 text-gray-700">
-                                    ${q.prompts.map(p => `<li>${p}</li>`).join('')}
-                                </ul>
-                            </div>
-                            ${q.connection ? `
-                                <div class="bg-blue-50 border-l-4 border-blue-500 p-4">
-                                    <strong class="text-blue-900">Connection to Your Life:</strong>
-                                    <p class="text-blue-800 text-sm mt-1">${q.connection}</p>
-                                </div>
-                            ` : ''}
-                        </div>
-                    </details>
-                `).join('')}
-            </div>
-            
-            <div class="mt-8 flex gap-4">
-                <button onclick="backToSelection()" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300">
-                    Choose Another Case
-                </button>
-                <button onclick="window.print()" class="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700">
-                    Print Case Study
-                </button>
-            </div>
-        </section>
-    `;
-}
-
-function generateDiscussionQuestions(caseId) {
-    const questions = {
-        mandela: [
-            {
-                question: "The Thermodynamic Paradox: How does spending energy create energy?",
-                prompts: [
-                    "Exercise costs metabolic energy. How did it INCREASE Mandela's available energy?",
-                    "What's the difference between 'conserving energy' and 'creating capacity'?",
-                    "Can you think of times when 'resting' actually made you more tired long-term?"
-                ],
-                connection: "When are YOU in 'extraction situations' where others control most of your life? What's your BioBond protocol?"
-            },
-            {
-                question: "Self-Care as Resistance: Is this selfish or necessary?",
-                prompts: [
-                    "Guards called exercise 'pointless' - it wouldn't get him released. Were they right?",
-                    "What's the difference between self-care and self-indulgence?",
-                    "How is maintaining your identity a form of resistance to oppression?"
-                ],
-                connection: "Are you sacrificing self-care to meet others' demands? What's the long-term cost?"
-            },
-            {
-                question: "The 27-Year Timeline: Why does the simulation matter?",
-                prompts: [
-                    "If Mandela had skipped exercise for 'just' the first year, what cascade would follow?",
-                    "At what point does identity damage become irreversible?",
-                    "How did his daily choices enable South Africa's peaceful transition decades later?"
-                ],
-                connection: "What daily practices are you maintaining or abandoning? Run your own 5-year simulation."
-            }
-        ],
-        
-        boisjoly: [
-            {
-                question: "The Cost of Truth: Why was the 'easy' path actually harder?",
-                prompts: [
-                    "Calculate the metabolic cost of maintaining 'I'm a good person' while children die",
-                    "What's the difference between one-time suffering and permanent cognitive dissonance?",
-                    "Which path required MORE total energy over 5 years?"
-                ],
-                connection: "Have you ever chosen the 'easy' path that required constant rationalization? What did it cost you?"
-            },
-            {
-                question: "Moral Injury vs. Moral Courage: What's the mechanism?",
-                prompts: [
-                    "Why did limited testimony lead to identity fracture?",
-                    "Why did full truth (despite destroying his career) STRENGTHEN his identity?",
-                    "What does this tell us about the relationship between values and thermodynamic health?"
-                ],
-                connection: "Are you in a situation where your values conflict with your actions? What's the A-score trajectory?"
-            },
-            {
-                question: "Legacy Through Suffering: Was it worth it?",
-                prompts: [
-                    "Boisjoly's testimony changed engineering ethics globally. Could he have known that in 1986?",
-                    "If you won't see the results, does the meaning still exist?",
-                    "How do you calculate ROI for CIB production that outlives you?"
-                ],
-                connection: "What would you endure to prevent future harm to people you'll never meet?"
-            }
-        ],
-        
-        salk: [
-            {
-                question: "The $7 Billion Question: What did Salk optimize for?",
-                prompts: [
-                    "Financial capital maximizes wealth for one generation. CIB production compounds forever. Calculate the difference.",
-                    "Did 'giving it away' actually COST him or BENEFIT him thermodynamically?",
-                    "What's the metabolic cost of knowing poor children died because you charged for vaccine?"
-                ],
-                connection: "When have you chosen generativity over extraction? What happened to your meaning scores?"
-            },
-            {
-                question: "Cognitive Dissonance Energy Drain: The hidden cost of wealth",
-                prompts: [
-                    "If Salk had patented, how much energy would he burn daily on rationalization?",
-                    "Every news story about polio in poor countries = assault on identity. How long can you sustain that?",
-                    "Compare: Zero cognitive dissonance vs. constant rationalization. Which produces more Fire long-term?"
-                ],
-                connection: "Are you 'getting ahead' in ways that require you to not think about the consequences?"
-            },
-            {
-                question: "The Generativity Cascade: Why does giving create more?",
-                prompts: [
-                    "Salk's CPR INCREASED after giving away the patent. How is this thermodynamically possible?",
-                    "His decision influenced measles vaccine, hepatitis B, open science movement. Can you measure that CIB production?",
-                    "'Could you patent the sun?' became a civilizational meme. What's that worth?"
-                ],
-                connection: "What could you give away that would create more value than you could ever extract by keeping it?"
-            }
-        ],
-        
-        carson: [
-            {
-                question: "The Terminal Timeline: How do you spend your last Fire?",
-                prompts: [
-                    "Carson had ~2 years of metabolic capacity left. Rest peacefully or fight chemical industry?",
-                    "When Fire is almost out, what's the ethical use of remaining energy?",
-                    "She died before EPA was created. Did her CIB production 'succeed'?"
-                ],
-                connection: "If you knew you had 2 years left, what would you build with the time? (You don't know you DON'T have 2 years...)"
-            },
-            {
-                question: "Legacy vs. Comfort: Is this even a trade-off?",
-                prompts: [
-                    "Path A: Higher LQI (physical comfort), lower CPR (no legacy). Path B: Opposite. Which would YOU choose?",
-                    "Does 'dying well' mean dying comfortably or dying meaningfully?",
-                    "Carson's identity STRENGTHENED as her body failed. How is this thermodynamically possible?"
-                ],
-                connection: "What are you NOT doing because it would be uncomfortable, even though it would create lasting value?"
-            },
-            {
-                question: "The Infinite Horizon: When does your CIB production end?",
-                prompts: [
-                    "Carson died in 1964. Environmental movement still running on her CIB in 2026. Calculate the temporal breadth.",
-                    "Her C-score was 95 despite dying - vision extended beyond her death. What does this mean for meaning?",
-                    "Can you die thermodynamically 'successful' even if you die physically 'defeated'?"
-                ],
-                connection: "What are you building that will keep creating value after you're gone?"
-            }
-        ]
-    };
-    
-    return questions[caseId] || [];
-}
-
-// ==========================================
-// COMPARATIVE ANALYSIS
-// ==========================================
-
-function displayComparativeAnalysis() {
-    document.getElementById('case-selection').classList.add('hidden');
-    const container = document.getElementById('case-display');
-    container.classList.remove('hidden');
-    
-    container.innerHTML = `
-        <div class="space-y-8">
-            <div class="flex items-center gap-4 mb-6">
-                <button onclick="backToSelection()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                    ← Back to Cases
-                </button>
-                <h2 class="text-3xl font-bold text-gray-900">Comparative Analysis: Universal Patterns</h2>
-            </div>
-            
-            <section class="bg-white rounded-2xl shadow-xl p-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Common Thermodynamic Patterns</h3>
-                
-                ${generateComparativeTable()}
-                
-                <div class="mt-8 space-y-6">
-                    ${generateUniversalInsights()}
-                </div>
-            </section>
-            
-            <section class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-2xl shadow-xl p-8 border-2 border-purple-300">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">The Meta-Pattern: What Makes the "Hard" Path Lead to Flourishing?</h3>
-                ${generateMetaPattern()}
-            </section>
-        </div>
-    `;
-}
-
-function generateComparativeTable() {
-    const cases = Object.keys(historicalCases);
-    
-    return `
-        <div class="overflow-x-auto">
-            <table class="w-full border-2 border-gray-300">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-3 text-left border-2 border-gray-300">Figure</th>
-                        <th class="px-4 py-3 text-left border-2 border-gray-300">Baseline Vulnerability</th>
-                        <th class="px-4 py-3 text-left border-2 border-gray-300">Path A (Easy)</th>
-                        <th class="px-4 py-3 text-left border-2 border-gray-300">Path B (Hard)</th>
-                        <th class="px-4 py-3 text-left border-2 border-gray-300">Actual Choice</th>
-                        <th class="px-4 py-3 text-left border-2 border-gray-300">Long-term Result</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${cases.map(caseId => {
-                        const c = historicalCases[caseId];
-                        return `
-                            <tr class="border-t-2 border-gray-300 hover:bg-gray-50">
-                                <td class="px-4 py-3 border-2 border-gray-300 font-bold">${c.name}</td>
-                                <td class="px-4 py-3 border-2 border-gray-300 text-sm">${identifyVulnerabilities(c.baselineScores)}</td>
-                                <td class="px-4 py-3 border-2 border-gray-300 text-sm">${c.decision.pathA.name}</td>
-                                <td class="px-4 py-3 border-2 border-gray-300 text-sm">${c.decision.pathB.name}</td>
-                                <td class="px-4 py-3 border-2 border-gray-300 text-center">
-                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full font-bold">
-                                        ${c.actualOutcome.path}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 border-2 border-gray-300 text-sm">${c.actualOutcome.metrics.identityOutcome}</td>
-                            </tr>
-                        `;
-                    }).join('')}
-                </tbody>
-            </table>
-        </div>
-    `;
-}
-
-function generateUniversalInsights() {
-    return `
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="p-6 bg-blue-50 border-2 border-blue-300 rounded-xl">
-                <h4 class="font-bold text-blue-900 mb-3">Pattern 1: Authenticity Over Comfort</h4>
-                <p class="text-sm text-blue-800">
-                    <strong>All four</strong> chose the path aligned with their core identity (high MDI-Authenticity) 
-                    over the path offering external rewards or comfort. Result: Identity <em>strengthened</em> rather than fractured.
-                </p>
-            </div>
-            
-            <div class="p-6 bg-green-50 border-2 border-green-300 rounded-xl">
-                <h4 class="font-bold text-green-900 mb-3">Pattern 2: Short-term Cost, Long-term Gain</h4>
-                <p class="text-sm text-green-800">
-                    Path B always had <strong>higher initial metabolic cost</strong> but 
-                    <strong>lower total cost</strong> because no energy wasted on cognitive dissonance.
-                </p>
-            </div>
-            
-            <div class="p-6 bg-purple-50 border-2 border-purple-300 rounded-xl">
-                <h4 class="font-bold text-purple-900 mb-3">Pattern 3: Generativity Creates Capacity</h4>
-                <p class="text-sm text-purple-800">
-                    Every case: CPR increased AFTER choosing the generative path. 
-                    <strong>Giving away</strong> created more capacity than <strong>extracting</strong> ever could.
-                </p>
-            </div>
-            
-            <div class="p-6 bg-orange-50 border-2 border-orange-300 rounded-xl">
-                <h4 class="font-bold text-orange-900 mb-3">Pattern 4: Legacy Trumps Lifetime</h4>
-                <p class="text-sm text-orange-800">
-                    All chose paths that maximized CIB production <strong>beyond their lifespan</strong> 
-                    over paths that maximized personal benefit within lifespan.
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-function generateMetaPattern() {
-    return `
-        <div class="space-y-4 text-gray-800">
-            <p class="text-lg">
-                Across all four cases, the <strong>"hard" path led to thermodynamic flourishing</strong> while 
-                the <strong>"easy" path led to identity degradation</strong>. Why?
-            </p>
-            
-            <div class="bg-white rounded-xl p-6">
-                <h4 class="font-bold text-gray-900 mb-4">The Universal Equation:</h4>
-                <div class="space-y-3 text-sm">
-                    <div class="p-3 bg-red-50 rounded-lg">
-                        <strong class="text-red-900">Path A (Easy):</strong>
-                        <div class="mt-1 text-red-800">
-                            Low immediate cost + High cognitive dissonance + Identity-values misalignment = 
-                            <strong>Permanent metabolic drain → Identity fracture</strong>
-                        </div>
-                    </div>
-                    
-                    <div class="p-3 bg-green-50 rounded-lg">
-                        <strong class="text-green-900">Path B (Hard):</strong>
-                        <div class="mt-1 text-green-800">
-                            High immediate cost + Zero cognitive dissonance + Perfect identity-values alignment = 
-                            <strong>One-time cost → Sustained flourishing</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="bg-indigo-50 border-2 border-indigo-300 rounded-xl p-6">
-                <h4 class="font-bold text-indigo-900 mb-3">The Thermodynamic Law of Moral Courage:</h4>
-                <p class="text-indigo-900 text-lg italic">
-                    "Choices that maximize short-term comfort while violating core identity create 
-                    permanent metabolic costs that exceed the initial suffering of authentic action."
-                </p>
-            </div>
-            
-            <div class="bg-yellow-50 border-l-4 border-yellow-500 p-6">
-                <strong class="text-yellow-900">For Students:</strong>
-                <p class="text-yellow-800 mt-2">
-                    The simulations show that <strong>thermodynamic models can predict moral outcomes</strong>. 
-                    This isn't philosophy—it's physics. Your identity is a dissipative structure. 
-                    The choices you make determine whether you flourish or fracture.
-                </p>
-            </div>
-        </div>
-    `;
-}
-
-function backToSelection() {
-    document.getElementById('case-display').classList.add('hidden');
-    document.getElementById('case-display').innerHTML = '';
-    document.getElementById('case-selection').classList.remove('hidden');
-    simulationResults = null;
-    currentCase = null;
-    if (currentChart) {
-        currentChart.destroy();
-        currentChart = null;
-    }
-}
+  }catch(e){}
+});
+completedTabs.add('outside');
+updateProgress();
 </script>
-
 </body>
 </html>
